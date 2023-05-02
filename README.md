@@ -1,1 +1,1 @@
-# Diplomka
+# Diplomová práca
