@@ -21,3 +21,4 @@ Anotácia a cieľ
 
 Denník
 ---
+##Projektový seminár (1) - Letný semester
