@@ -124,3 +124,4 @@ výrazy sa dajú vyhodnocovať, nadväzujú však na problém s premennými.
 
 * Príprava na prezentáciu - LateX, GitHub repo, prezentácia, upratanie kódu, súborov
 
+* Konzultácia so školiteľkou
