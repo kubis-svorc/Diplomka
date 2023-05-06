@@ -7,7 +7,7 @@ Konakt: svorc7@uniba.sk
 
 
 
-Vedúci práce: RNDr. Ľudmila Jašková, PHd.
+Vedúci práce: RNDr. Ľudmila Jašková, PhD.
 
 Názov:
 
