@@ -122,5 +122,5 @@ výrazy sa dajú vyhodnocovať, nadväzujú však na problém s premennými.
 
 **01.05.2023 - 07.05.2023 :**
 
-* Príprava na prezentáciu
+* Príprava na prezentáciu - LateX, GitHub repo, prezentácia, upratanie kódu, súborov
 
