@@ -13,7 +13,7 @@ Názov:
 
 
 
-EDUKAČNÉ PROSTREDIE NA PROGRAMOVANIE HUDBY PRÍSTUPNÉ PRE NEVIDIACICH ŽIAKOV SEKUNDÁRNEHO VZDELÁVANIA
+Edukačné prostredie na programovanie hudby prístupné pre nevidiacich žiakov sekundárneho vzdelávania
 ---
 
 Anotácia a cieľ
