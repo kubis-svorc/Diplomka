@@ -30,6 +30,9 @@ Projektový seminár (1) - Letný semester:
 
 * Spracovanie literatúry
 
+* Konzultácia so školiteľkou
+
+
 **20.02.2023 - 26.02.2023 :**
 
 * Vytvorenie demo projektu v JavaFX a Python, testovanie kompatibility a dostupnosti UI elementov voči NVDA 
@@ -42,12 +45,14 @@ Projektový seminár (1) - Letný semester:
 
 * Oboznámenie sa so syntaxov nami navrhnutého jazyka
 
+
 **06.03.2023 - 12.03.2023 :**
 
 * Jednoduchý interpreter na priame vykonávanie jednoduchých príkazov (tón) - testovanie knižníc.
 
 * Nepodporuje prácu s premennými, podprogrami, vetvenia a podmienené cykly.
 
+* Konzultácia so školiteľou, ukážka interpretera a chodu aplikácie
 
 **13.03.2023 - 19.03.2023 :**
 
@@ -73,6 +78,8 @@ Projektový seminár (1) - Letný semester:
 
 * Implementácia syntaktickej kontroly.
 
+* Konzultácia so školiteľkou
+
 
 **03.04.2023 - 09.04.2023 :**
 
@@ -82,7 +89,7 @@ Projektový seminár (1) - Letný semester:
 
 * Doplnenie terminálu na chybové hlásenia a výpis.
 
-* Úprava GUI.
+* Úprava GUI podľa pripomienok školiteľky.
 
 **10.04.2023 - 16.04.2023 :**
 
