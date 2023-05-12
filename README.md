@@ -16,8 +16,32 @@ Názov:
 Edukačné prostredie na programovanie hudby prístupné pre nevidiacich žiakov sekundárneho vzdelávania
 ---
 
-Anotácia a cieľ
+
+Anotácia
 ---
+Autor vytvorí programovacie prostredie s vlastným kompilátorom alebo
+interpreterom. Základné príkazy zabudovaného programovacieho jazyka budú
+slúžiť na prehratie tónov zvoleným hudobným nástrojom. Okrem toho bude
+možné použiť aj komplikovanejšie štruktúry, ako je cyklus, príkaz vetvenia,
+podprogram, vlákno.
+Editor kódu bude mať zabudovanú kontrolu syntaxe a funkciu prediktívnej
+ponuky príkazov.
+Prostredie bude prístupné pre čítač obrazovky a bude plne ovládateľné pomocou
+klávesnice. Nevidiacim používateľom umožní okrem bežnej práce s textom aj
+jednoduchým spôsobom získať prehľad o štruktúre vytvoreného kódu.
+Použiteľnosť výslednej aplikácie pre cieľového používateľa bude zabezpečená
+vďaka výskumu vývojom (design based research), t.j. iteratívnym vývojom
+a overovaním s rôznymi typmi používateľov (nevidiaci programátor, učiteľ
+nevidiacich žiakov, nevidiaci žiak).
+
+
+Cieľ
+---
+Vytvoriť programovacie prostredie umožňujúce programovať hudbu
+pozostávajúcu z viacerých paralelne znejúcich melódií. Dôraz bude kladený
+na zabezpečenie plnej prístupnosti a efektívnej práce s editorom kódu pre žiakov
+so zrakovým postihnutím.
+
 
 Denník
 ---
