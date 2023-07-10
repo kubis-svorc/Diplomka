@@ -1,448 +1,454 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Diplomka
+﻿namespace Diplomka.Runtime
 {
-	class Compiler
-	{
-		public const int NOTHING = 0;
-		public const int NUMBER = 1;
-		public const int WORD = 2;
-		public const int SYMBOL = 3;
+    using Sanford.Multimedia.Midi;
+	using Diplomka.Analyzators;
 
-		public const int INSTRUCTION_FD = 1;
-		public const int INSTRUCTION_LT = 2;
-		public const int INSTRUCTION_RT = 3;
-		public const int INSTRUCTION_SET = 4;
-		public const int INSTRUCTION_LOOP = 5;
+    public class Compiler
+    {
+        private LexicalAnalyzer analyzer;
 
-		public string input;
-		public char look;
-		public StringBuilder token;
-		public int index, position;
-		public int kind;
+        delegate void Scanner();    // to use shortcut Scan() for analyzer.Scan()
 
-		public int[] mem;
-		public int pc;
-		public bool terminated;
-		public int adr;
+		delegate void Poker(int i); // to use shortcut Poke(code) for VirtualMachine.Poke(code)
+
+		private Scanner Scan;	// procedure reference
+
+        private Poker Poke;     // procedure reference
 
 		public Compiler()
-		{
-			token = new StringBuilder();
-			mem = new int[100];
-		}
+        {
+            analyzer = new LexicalAnalyzer();
+            Scan = analyzer.Scan;
+			Poke = VirtualMachine.Poke;
+        }
 
-		#region lexical_analyst
-		// lexikalny analyzator
-		public void Next()
-		{
-			if (index >= input.Length)
-			{
-				look = '\0';
-			}
-			else
-			{
-				look = input[index];
-				index++;
-			}
-		}
+        public Compiler(string programText) : this()
+        {
+            analyzer.Init(programText);
+        }
 
-		public void Scan()
-		{
-			while (look == ' ' || look == '\n')
-			{
-				Next();
-			}
+        /// <summary>
+        /// Procedure fills memory of virtual machine with instructions.
+		/// Consider using Parse() to create Syntax tree
+        /// </summary>
+        public void Compile(int counterAddress)
+        {
+            while (analyzer.kind != Kind.NOTHING)
+            {
+                if ("nastroj" == analyzer.ToString())
+                {
+                    Scan();
+                    Poke((int)Instruction.Insturment);
+                    Poke(GetInstrumentCode(analyzer.ToString()));
+                    Scan();
+                }
 
-			token.Clear();
-			position = index - 1;
+                else if ("hraj" == analyzer.ToString())
+                {
+					Scan(); //preskoc hraj
+					int toneCode = GetToneCode(analyzer.ToString()); // ton <c, d, e, f, g, ek2, ... >
+					Scan();	//preskoc ton
+					string parameters = analyzer.ToString();
 
-			if (char.IsNumber(look))
-			{
-				do
-				{
-					token.Append(look);
-					Next();
-
-				} while (char.IsNumber(look));
-				kind = NUMBER;
-			}
-			else if (char.IsLetter(look))
-			{
-				do
-				{
-					token.Append(look);
-					Next();
-
-				} while (char.IsNumber(look));
-				kind = WORD;
-			}
-			else if (look != '\0')
-			{
-				token.Append(look);
-				Next();
-				kind = SYMBOL;
-			}
-			else
-			{
-				kind = NOTHING;
-			}
-		}
-		#endregion
-
-		#region syntax_analyst
-		// syntakticky analyzator
-		public void interpreter()
-		{
-			string tkn;
-			while (kind == WORD)
-			{
-				tkn = token.ToString();
-				if ("dopredu" == tkn)
-				{
-					Scan();
-					// vykonaj dopredu
-					Scan();
-				}
-				else if ("vlavo" == tkn)
-				{
-					Scan();
-					// vykonaj vlavo
-					Scan();
-				}
-				else if ("vpravo" == tkn)
-				{
-					Scan();
-					// vykonaj vlavo
-					Scan();
-				}
-				else if ("opakuj" == tkn)
-				{
-					Scan();
-					int count = Convert.ToInt32(tkn);
-					Scan();
-					if ("[" == tkn)
-					{
-						Scan();
-						int start = position;
-						while (count > 0)
-						{
-							index = start;
-							Next();
-							Scan();
-							interpreter();
-							count--;
+					while(parameters.IndexOf(":") > -1)
+                    {
+						if ("h:" == parameters)
+                        {
+							Scan();	 //preskoc h:
+							analyzer.Check(Kind.NUMBER);
+							Poke((int)Instruction.Volume);
+							Poke(System.Convert.ToInt32(analyzer.ToString()));
+							Scan();	// preskoc cislo
+                        }
+						else if ("s:" == parameters)
+                        {
+							Scan();  //preskoc s:
+							analyzer.Check(Kind.NUMBER);
+							Poke((int)Instruction.Direction);
+							Poke(System.Convert.ToInt32(analyzer.ToString()));
+							Scan(); // preskoc cislo
 						}
-					}
-					if ("]" == tkn)
-					{
-						Scan();
-					}
-				}
+						else if ("d:" == parameters)
+                        {
+							Scan();  //preskoc d:
+							analyzer.Check(Kind.NUMBER);
+							Poke((int)Instruction.Duration);
+							Poke(System.Convert.ToInt32(analyzer.ToString()));
+							Scan(); // preskoc cislo
+						}
+						parameters = analyzer.ToString();
+                    }
+					
+					Poke((int)Instruction.Sound);
+					Poke(toneCode);
+				}											
+
+				else if ("opakuj" == analyzer.ToString())
+                {
+					Scan();
+					Poke((int)Instruction.Set);
+					Poke(counterAddress);
+					analyzer.Check(Kind.NUMBER);
+					Poke(System.Convert.ToInt32(analyzer.ToString()));
+					Scan();
+					Scan();
+					int bodyAddress = VirtualMachine.adr;
+					Compile(counterAddress - 1);
+					Poke((int)Instruction.Loop);
+					Poke(counterAddress);
+					Poke(bodyAddress);
+					Scan();
+                }
+				
 				else
-				{
+                {
 					return;
-				}
-			}
-		}
-		#endregion
+                }
+            }
+        }
 
-		#region virtual_machine
-		public void Reset()
-		{
-			pc = 0;
-			terminated = false;
-		}
+        public static int GetInstrumentCode(string instrument)
+        {
+            int instrumentCode;
 
-		public void Execute()
+            switch (instrument)
+            {
+				case "husle":
+				case "violin":
+					instrumentCode = (int)GeneralMidiInstrument.Violin;
+					break;
+                case "bicie":
+                case "drums":
+                    instrumentCode = (int)GeneralMidiInstrument.SynthDrum;
+                    break;
+                case "gitara":
+                case "guitar":
+                    instrumentCode = (int)GeneralMidiInstrument.AcousticGuitarNylon;
+                    break;
+                case "organ":
+                    instrumentCode = (int)GeneralMidiInstrument.ChurchOrgan;
+                    break;
+                case "spev":
+                case "hlas":
+                case "voice":
+                    instrumentCode = (int)GeneralMidiInstrument.VoiceOohs;
+                    break;
+                case "trubka":
+                case "trumpet":
+                    instrumentCode = (int)GeneralMidiInstrument.Trumpet;
+                    break;
+                case "harfa":
+                case "haprh":
+                    instrumentCode = (int)GeneralMidiInstrument.OrchestralHarp;
+                    break;
+                case "akordeon":
+                case "accordion":
+                    instrumentCode = (int)GeneralMidiInstrument.Accordion;
+                    break;
+				case "flauta":
+				case "flute":
+					instrumentCode = (int)GeneralMidiInstrument.Flute;
+					break;
+                case "klavir":
+                case "piano":
+                default:
+                    instrumentCode = (int)GeneralMidiInstrument.AcousticGrandPiano;
+                    break;
+            }
+            return instrumentCode;
+        }
+
+		private int GetToneCode(string tone)
 		{
-			switch (mem[pc])
+			int code;
+			switch (tone)
 			{
-				case INSTRUCTION_FD:
-					pc++;
-					//vykonaj dopredu
-					pc++;
+				case "c":
+					code = (int)Tone.C;
 					break;
-
-				case INSTRUCTION_LT:
-					pc++;
-					//vykonaj left
-					pc++;
+				case "ck":
+				case "db":
+					code = (int)Tone.Cis;
 					break;
-
-				case INSTRUCTION_RT:
-					pc++;
-					//vykonaj left
-					pc++;
+				case "d":
+					code = (int)Tone.D;
 					break;
-
-				case INSTRUCTION_LOOP:
-					pc++;
-					index = mem[pc];
-					pc++;
-					mem[index] = mem[index] - 1;
-					if (mem[index] > 0)
-					{
-						pc = mem[pc];
-					}
-					else
-					{
-						pc++;
-					}
+				case "dk":
+				case "eb":
+					code = (int)Tone.Dis;
 					break;
-
-				case INSTRUCTION_SET:
-					pc++;
-					index = mem[pc];
-					pc++;
-					mem[index] = mem[pc];
-					pc++;
+				case "e":
+				case "fb":
+					code = (int)Tone.E;
 					break;
-
+				case "ek":
+				case "f":
+					code = (int)Tone.F;
+					break;
+				case "fk":
+				case "gb":
+					code = (int)Tone.Fis;
+					break;
+				case "g":
+					code = (int)Tone.G;
+					break;
+				case "gk":
+				case "ab":
+					code = (int)Tone.Gis;
+					break;
+				case "a":
+					code = (int)Tone.A;
+					break;
+				case "ak":
+				case "b":
+					code = (int)Tone.B;
+					break;
+				case "h":
+				case "cb":
+					code = (int)Tone.H;
+					break;
+				case "c2":
+					code = (int)Tone.C2;
+					break;
+				case "ck2":
+				case "db2":
+					code = (int)Tone.Cis2;
+					break;
+				case "d2":
+					code = (int)Tone.D2;
+					break;
+				case "dk2":
+				case "eb2":
+					code = (int)Tone.Dis2;
+					break;
+				case "e2":
+				case "fb2":
+					code = (int)Tone.E2;
+					break;
+				case "ek2":
+				case "f2":
+					code = (int)Tone.F2;
+					break;
+				case "fk2":
+				case "gb2":
+					code = (int)Tone.Fis2;
+					break;
+				case "g2":
+					code = (int)Tone.G2;
+					break;
+				case "gk2":
+				case "ab2":
+					code = (int)Tone.Gis2;
+					break;
+				case "a2":
+					code = (int)Tone.A2;
+					break;
+				case "ak2":
+				case "b2":
+					code = (int)Tone.B2;
+					break;
+				case "h2":
+				case "cb2":
+					code = (int)Tone.H2;
+					break;
+				case "c3":
+					code = (int)Tone.C3;
+					break;
 				default:
-					terminated = true;
+					code = 0;
 					break;
 			}
-
+			return code;
 		}
 
-		public void Poke(int code)
+		/// <summary>
+		/// Function creates Syntax Tree reperesenting program
+		/// </summary>
+		/// <returns>Block as root of syntax tree</returns>
+		public Block Parse()
 		{
-			mem[adr] = code;
-			adr++;
-		}
-		#endregion
-
-		#region compiler
-		public void Compile(int counterAdr)
-		{
-			string tkn;
-			while (kind == WORD)
+			var result = new Block();
+			while (Kind.WORD == analyzer.kind)
 			{
-				tkn = token.ToString();
-				switch (tkn)
-				{
-					case "fd":
-						Scan();
-						Poke(INSTRUCTION_FD);
-						Poke(Convert.ToInt32(tkn));
-						break;
-
-					case "left":
-						Scan();
-						Poke(INSTRUCTION_LT);
-						Poke(Convert.ToInt32(tkn));
-						break;
-
-					case "right":
-						Scan();
-						Poke(INSTRUCTION_RT);
-						Poke(Convert.ToInt32(tkn));
-						break;
-
-					case "repeat":
-						Scan();
-						Poke(INSTRUCTION_SET);
-						Poke(counterAdr);
-						Poke(Convert.ToInt32(tkn));
-						Scan();
-						Scan();
-						int bodyAdr = adr;
-						Compile(counterAdr - 1);
-						Poke(INSTRUCTION_LOOP);
-						Poke(counterAdr);
-						Poke(bodyAdr);
-						Scan();
-						break;
-
-					default:
-						break;
-				}
-			}
-
-
-		}
-
-		#endregion
-
-		#region syntaxtree
-		public abstract class Syntax
-		{
-			public int CounterAdress;
-
-			protected int adr;
-
-			public abstract void Generate();
-
-			public virtual void Poke(int command)
-			{
-
-			}
-
-		}
-
-		public abstract class TurtleCommand : Syntax
-		{
-			public Constant param;
-
-			public TurtleCommand(Constant param)
-			{
-				this.param = param;
-			}
-
-			public abstract void Execute();
-		}
-
-		public class Constant : Syntax
-		{
-			public int Value;
-			public Constant(int value) : base()
-			{
-				this.Value = value;
-			}
-
-			public override void Generate()
-			{
-				Poke(this.Value);
-			}
-
-		}
-
-		public class Fd : TurtleCommand
-		{
-
-			public Fd(Constant param) : base(param)
-			{
-
-			}
-
-			public override void Execute()
-			{
-				//vykonaj dopredu
-			}
-
-			public override void Generate()
-			{
-				Poke(INSTRUCTION_FD);
-				param.Generate();
-			}
-		}
-
-		public class Lt : TurtleCommand
-		{
-			public Lt(Constant param) : base(param)
-			{
-			}
-
-			public override void Execute()
-			{
-				//vykonaj vlavo
-			}
-
-			public override void Generate()
-			{
-				Poke(INSTRUCTION_LT);
-				param.Generate();
-			}
-		}
-
-		public class Rt : TurtleCommand
-		{
-			public Rt(Constant param) : base(param)
-			{
-			}
-
-			public override void Execute()
-			{
-				//vykonaj rt
-			}
-
-			public override void Generate()
-			{
-				Poke(INSTRUCTION_RT);
-				param.Generate();
-			}
-		}
-
-		public class Block : Syntax
-		{
-			public Syntax[] items;
-
-			public int counter;
-
-			public Block(params Syntax[] items) : base()
-			{
-				this.items = items;
-				counter = (items == null) ? 0 : items.Length;
-			}
-
-			public void Add(Syntax item)
-			{
-				if (items.Length == counter)
-				{
-					var newItems = new Syntax[items.Length + 1];
-					Array.Copy(items, newItems, items.Length);
-				}
-				items[counter] = item;
-			}
-
-			public override void Generate()
-			{
-				foreach (Syntax item in items)
-				{
-					item.Generate();
-				}
-			}
-		}
-
-		public class Repeat : Syntax
-		{
-			Constant counter;
-			Block body;
-
-			public Repeat(Constant counter, Block body)
-			{
-				this.counter = counter;
-				this.body = body;
-			}
-
-			public override void Generate()
-			{
-				Poke(INSTRUCTION_SET);
-				Poke(CounterAdress);
-				counter.Generate();
-				CounterAdress--;
-				int loopBody = adr; //adr je z compiler classy
-				body.Generate();
-				CounterAdress++;
-				Poke(INSTRUCTION_LOOP);
-				Poke(CounterAdress);
-				Poke(loopBody);
-
-			}
-
-		}
-
-		public void Parse()
-		{
-			var Result = new Block();
-			while (kind == WORD)
-			{
-				if ("dopredu" == token.ToString())
+				if ("nastroj" == analyzer.ToString())
 				{
 					Scan();
-					Result.Add(new Fd(new Constant(Convert.ToInt32(token.ToString()))));
+					int instrumentCode = GetInstrumentCode(analyzer.ToString());
+					result.Add(new Instrument(instrumentCode));
 					Scan();
 				}
-				// ... lt, rt, ...
+
+				else if ("hraj" == analyzer.ToString())
+				{
+					Scan(); //preskoc hraj
+					string ton = analyzer.ToString();
+					Scan();
+					if (Kind.NUMBER == analyzer.kind)	// c2, c3, c1, ...
+                    {
+						ton += analyzer.ToString();
+						Scan();						
+                    }
+					int toneCode = GetToneCode(ton); // ton <c, d, e, f, g, ek2, ... >					
+					string parameters = analyzer.ToString();
+
+					int duration = VirtualMachine.DEFAULT_DURATION,
+						volume = VirtualMachine.DEFAULT_VOLUME,
+						direction = 0;
+
+					while (parameters.IndexOf(":") > -1)
+					{
+						if ("h:" == parameters)
+						{
+							Scan();  //preskoc h:
+							analyzer.Check(Kind.NUMBER);
+							volume = System.Convert.ToInt32(analyzer.ToString());
+							Scan(); // preskoc cislo
+						}
+						else if ("s:" == parameters)
+						{
+							Scan();  //preskoc s:
+							analyzer.Check(Kind.NUMBER);
+							direction = System.Convert.ToInt32(analyzer.ToString());
+							Scan(); // preskoc cislo
+						}
+						else if ("d:" == parameters)
+						{
+							Scan();  //preskoc d:
+							analyzer.Check(Kind.NUMBER);
+							duration = System.Convert.ToInt32(analyzer.ToString());
+							Scan(); // preskoc cislo
+						}
+						parameters = analyzer.ToString();
+					}
+
+					result.Add(new Analyzators.Tone(toneCode, duration, volume));
+				}
+
+				else if ("opakuj" == analyzer.ToString())
+				{
+					Scan();
+					Syntax count;
+					if (analyzer.kind == Kind.NUMBER)
+                    {
+						count = new Const(System.Convert.ToInt32(analyzer.ToString()));
+                    }
+					else
+                    {
+						analyzer.Check(Kind.WORD);
+						if (!VirtualMachine.Variables.ContainsKey(analyzer.ToString()))
+                        {
+							throw new System.Collections.Generic.KeyNotFoundException(
+								$"{analyzer} je neznama premenna");
+                        }
+
+						string name = analyzer.ToString();
+						count = new Variable(name);
+                    }
+
+					Scan();
+					result.Add(new Cycle(count, Parse()));
+					//analyzer.Check(Kind.WORD, "koniec");
+					Scan();
+				}
+
+				else if ("losuj" == analyzer.ToString() || "los" == analyzer.ToString())
+                {
+					Scan();
+					analyzer.Check(Kind.SYMBOL, "(");
+					Scan();
+					analyzer.Check(Kind.NUMBER);
+                }
+					
+				else
+                {
+					string name = analyzer.ToString();
+					Scan();
+
+					if ("=" != analyzer.ToString())
+                    {
+						// podprogram
+                    }
+					else
+                    {
+						Scan();
+						result.Add(new Assign(new Variable(name), AddSub()));
+						if (!VirtualMachine.Variables.ContainsKey(name))
+                        {
+							VirtualMachine.Variables.Add(name, VirtualMachine.Variables.Count + 2);
+                        }
+                    }
+
+                }
 			}
+			return result;
+        }	
+	
+		public void JumpToProgramBody()
+        {
+			int offset = VirtualMachine.Variables.Count;
+			Poke((int)Instruction.Jmp);
+			Poke(2 + offset);
+			VirtualMachine.adr += offset;
 		}
 
-		#endregion syntaxtree
+		public Syntax Operand()
+        {
+			Syntax result;
+			if (analyzer.kind == Kind.WORD)
+            {
+				string name = analyzer.ToString();
+				if (!VirtualMachine.Variables.ContainsKey(name))
+                {
+					throw new System.Collections.Generic.KeyNotFoundException($"{name} nie je zadeklarovane");
+                }
+				result = new Variable(name);
+            }
+			else
+            {
+				analyzer.Check(Kind.NUMBER);
+				result = new Const(System.Convert.ToInt32(analyzer.ToString()));
+            }
+			Scan();
+			return result;
+        }
+
+		public Syntax MulDiv()
+		{
+			var result = Operand();
+            while ("*" == analyzer.ToString() || "/" == analyzer.ToString())
+            {
+				if ("*" == analyzer.ToString())
+                {
+					Scan();
+					result = new Mul(result, AddSub());
+                }
+				else if ("/" == analyzer.ToString())
+                {
+					Scan();
+					result = new Div(result, AddSub());
+				}
+            }	
+			return result;
+		}
+
+		public Syntax AddSub()
+        {
+			var result = MulDiv();
+			while ("+" == analyzer.ToString() || "-" == analyzer.ToString())
+			{
+				if ("+" == analyzer.ToString())
+				{
+					Scan();
+					result = new Add(result, AddSub());
+				}
+				else if ("-" == analyzer.ToString())
+				{
+					Scan();
+					result = new Sub(result, AddSub());
+				}
+			}
+			return result;
+		}
 
 	}
 }
-
-

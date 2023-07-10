@@ -13,7 +13,7 @@ namespace Diplomka
 		{
 			InitializeComponent();
 			//CodeTab.Text = "hraj E#2 h:100 d:250\r\n\r\nhraj c".ToLower();
-			CodeTab.Text = "opakuj 5 krat\r\n\thraj c d:1000 h:127\r\nkoniec".ToLower();
+			CodeTab.Text = "a = 123\r\nopakuj a\r\n    hraj c d:500 h:100\r\nkoniec".ToLower();
 			//CodeTab.Text = "a = 5\r\nvypis a".ToLower();
 
 		}
@@ -21,7 +21,6 @@ namespace Diplomka
 		private void OnExitClick(object sender, RoutedEventArgs e)
 		{
 			Close();
-			VirtualMachine.sequence.Dispose();
 			Application.Current.Shutdown(0);
 		}
 
@@ -30,12 +29,12 @@ namespace Diplomka
 
 			SaveFileDialog dialog = new SaveFileDialog();
 			dialog.InitialDirectory = "C:\\";
-			dialog.Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*";
+			dialog.Filter = "MIDI files (*.mid)|*.mid|All files (*.*)|*.*";
 
 			if (dialog.ShowDialog().Value)
             {
 				string path = dialog.FileName;
-				sequence.Save(path);
+				VirtualMachine.sequence.Save(path);
 			}
         }
 
