@@ -149,3 +149,9 @@ výrazy sa dajú vyhodnocovať, nadväzujú však na problém s premennými.
 * Príprava na prezentáciu - LateX, GitHub repo, prezentácia, upratanie kódu, súborov
 
 * Konzultácia so školiteľkou
+
+
+**10.07.2023 - 16.07.2023 :**
+
+* For-cyklus pracuje s premennymi, pripravane triedy na nekonecny cyklus
+
