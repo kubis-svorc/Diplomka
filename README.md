@@ -153,5 +153,5 @@ výrazy sa dajú vyhodnocovať, nadväzujú však na problém s premennými.
 
 **10.07.2023 - 16.07.2023 :**
 
-* For-cyklus pracuje s premennymi, pripravane triedy na nekonecny cyklus
+* For-cyklus pracuje s premennymi a celková práca s nimi, pripravane triedy na nekonecny cyklus
 
