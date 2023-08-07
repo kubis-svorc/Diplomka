@@ -155,3 +155,18 @@ výrazy sa dajú vyhodnocovať, nadväzujú však na problém s premennými.
 
 * For-cyklus pracuje s premennymi a celková práca s nimi, pripravane triedy na nekonecny cyklus
 
+**24.07.2023 - 30.07.2023**
+
+* Implementacia nekonecneho cyklus, pripravene triedy na logicke operacie (<, >, =, !=, <=, >=, +, /, -, *)
+
+
+**31.07.2023 - 06.08.2023**
+
+* Implementacia cyklu a logickych operacii do VM
+
+
+**07.08.2023 - 13.08.2023**
+
+* Implementacia primitivnych podprogramov (bez parametrov, bez navratovych hodnot), bugfix niektorych implementacii funkcie Generate()
+* 
+
