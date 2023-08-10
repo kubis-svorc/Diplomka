@@ -7,29 +7,18 @@ namespace Diplomka.Runtime
     public class VirtualMachine : IDisposable
 	{
 		private static OutputDevice outDevice;
-
 		public static Sequence sequence;
-
 		public static Track track;
-
 		private const int CHANNEL = 1, DEVICE_ID = 0, MemoryAllocSize = 100; // memory alloc
-
 		public const int DEFAULT_VOLUME = 127, DEFAULT_DURATION = 500;
-
 		private static int midiPos;
-
 		public static int[] mem;
-
 		public static int adr, pc, top;
-
 		private static bool terminated;
-
 		public static int CounterAddress = MemoryAllocSize - 1;
-
 		public static IDictionary<string, int> Variables;
+		public static IDictionary<string, Analyzators.Subroutine> Subroutines;
 
-		//public static IDictionary<string, Analyzators.Subroutine> Subroutines;
-			
 		static VirtualMachine()
 		{
 			mem = new int[MemoryAllocSize];
@@ -38,7 +27,7 @@ namespace Diplomka.Runtime
 			pc = 0;
 			outDevice = new OutputDevice(DEVICE_ID);
 			Variables = new Dictionary<string, int>();
-			//Subroutines = new Dictionary<string, Analyzators.Subroutine>();
+			Subroutines = new Dictionary<string, Analyzators.Subroutine>();
 			top = MemoryAllocSize;
 			track = new Track();
 			sequence = new Sequence();
@@ -57,7 +46,9 @@ namespace Diplomka.Runtime
 			adr = 0;
 			terminated = false;
 			Variables.Clear();
-			midiPos = 0;			
+			midiPos = 0;
+			Variables.Clear();
+			Subroutines.Clear();
 		}
 
 		public static void Poke(int code)
@@ -89,6 +80,12 @@ namespace Diplomka.Runtime
 					pc++;
 					break;
 
+				case (int)Instruction.Insturment:
+					pc++;
+					SetInstrument(mem[pc]);
+					pc++;
+					break;
+
 				case (int)Instruction.Loop:
 					pc++;
 					mem[top]--;
@@ -103,46 +100,11 @@ namespace Diplomka.Runtime
 					}
 					break;
 
-				case (int)Instruction.Insturment:
-					pc++;
-					SetInstrument(mem[pc]);
-					pc++;
-					break;
-				
 				case (int)Instruction.Push:
 					pc++;
 					top--;
 					mem[top] = mem[pc];
 					pc++;
-					break;
-
-				case (int)Instruction.Minus:
-					pc++;
-					mem[top] = -mem[top];
-					break;
-
-				case (int)Instruction.Add:
-					pc++;
-					mem[top + 1] = mem[top + 1] + mem[top];
-					top++;
-					break;
-
-				case (int)Instruction.Sub:
-					pc++;
-					mem[top + 1] = mem[top + 1] - mem[top];
-					top++;
-					break;
-
-				case (int)Instruction.Mul:
-					pc++;
-					mem[top + 1] = mem[top + 1] * mem[top];
-					top++;
-					break;
-
-				case (int)Instruction.Div:
-					pc++;
-					mem[top + 1] = mem[top + 1] / mem[top];
-					top++;
 					break;
 
 				case (int)Instruction.Get:
@@ -194,6 +156,71 @@ namespace Diplomka.Runtime
 
 				case (int)Instruction.Return:
 					pc = mem[top];
+					top++;
+					break;
+
+				case (int)Instruction.Minus:
+					pc++;
+					mem[top] = -mem[top];
+					break;
+
+				case (int)Instruction.Add:
+					pc++;
+					mem[top + 1] = mem[top] + mem[top + 1];
+					top++;
+					break;
+
+				case (int)Instruction.Sub:
+					pc++;
+					mem[top + 1] = mem[top] - mem[top + 1];
+					top++;
+					break;
+
+				case (int)Instruction.Mul:
+					pc++;
+					mem[top + 1] = mem[top] * mem[top + 1];
+					top++;
+					break;
+
+				case (int)Instruction.Div:
+					pc++;
+					mem[top + 1] = mem[top] / mem[top + 1];
+					top++;
+					break;
+
+				case (int)Instruction.Grt:
+					pc++;
+					mem[top + 1] = (mem[top + 1] > mem[top]) ? 1 : 0;
+					top++;
+					break;
+				
+				case (int)Instruction.Lwr:
+					pc++;
+					mem[top + 1] = (mem[top + 1] < mem[top]) ? 1 : 0;
+					top++;
+					break;
+
+				case (int)Instruction.GrEq:
+					pc++;
+					mem[top + 1] = (mem[top + 1] >= mem[top]) ? 1 : 0;
+					top++;
+					break;
+
+				case (int)Instruction.Diff:
+					pc++;
+					mem[top + 1] = (mem[top + 1] != mem[top]) ? 1 : 0;
+					top++;
+					break;
+
+				case (int)Instruction.LrEq:
+					pc++;
+					mem[top + 1] = (mem[top + 1] <= mem[top]) ? 1 : 0;
+					top++;
+					break;
+
+				case (int)Instruction.Eql:
+					pc++;
+					mem[top + 1] = (mem[top + 1] == mem[top]) ? 1 : 0;
 					top++;
 					break;
 

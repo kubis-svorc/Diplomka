@@ -13,6 +13,8 @@
 
 		public int index, position;
 
+		private const char END = '\0';
+
 		public StringBuilder token;
 
 		public Kind kind;
@@ -26,7 +28,7 @@
 		{
 			if (index >= input.Length)
 			{
-				look = '\0';
+				look = END;
 			}
 			else
 			{
@@ -42,11 +44,6 @@
 				Next();
             }
 
-			//while (' ' == look || '\n' == look || '\r' == look || '\t' == look)
-			//{
-			//	Next();
-			//}
-
 			token.Clear();
 			position = index - 1;
 
@@ -60,6 +57,7 @@
 				} while (char.IsNumber(look));
 				kind = Kind.NUMBER;
 			}
+			
 			else if (char.IsLetter(look) || look == ':')// || look == '#')
 			{
 				do
@@ -70,12 +68,25 @@
 				} while (char.IsLetter(look) || look == ':');// || look == '#');
 				kind = Kind.WORD;
 			}
+			
+			else if (look == '<' || look == '>' || look == '!' || look == '=')
+            {
+				token.Append(look);
+				Next();
+				if (look == '=')
+                {
+					token.Append(look);
+					Next();
+                }
+            }
+			
 			else if (look != '\0')
 			{
 				token.Append(look);
 				Next();
 				kind = Kind.SYMBOL;
 			}
+			
 			else
 			{
 				kind = Kind.NOTHING;
