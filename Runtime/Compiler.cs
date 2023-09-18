@@ -6,105 +6,19 @@
     public class Compiler
     {
         private LexicalAnalyzer analyzer;
-
-        delegate void Scanner();    // to use shortcut Scan() for analyzer.Scan()
-
-		delegate void Poker(int i); // to use shortcut Poke(code) for VirtualMachine.Poke(code)
-
+        private delegate void Scanner();    // to use shortcut Scan() for analyzer.Scan()
+        private delegate void Poker(int i); // to use shortcut Poke(code) for VirtualMachine.Poke(code)
 		private Scanner Scan;	// procedure reference
-
-        private Poker Poke;     // procedure reference
-
+		
 		public Compiler()
         {
             analyzer = new LexicalAnalyzer();
             Scan = analyzer.Scan;
-			Poke = VirtualMachine.Poke;
         }
 
         public Compiler(string programText) : this()
         {
             analyzer.Init(programText);
-        }
-
-        /// <summary>
-        /// Procedure fills memory of virtual machine with instructions.
-		/// Consider using Parse() to create Syntax tree
-        /// </summary>
-        public void Compile(int counterAddress)
-        {
-            while (analyzer.kind != Kind.NOTHING)
-            {
-                if ("nastroj" == analyzer.ToString())
-                {
-                    Scan();
-                    Poke((int)Instruction.Insturment);
-                    Poke(GetInstrumentCode(analyzer.ToString()));
-                    Scan();
-                }
-
-                else if ("hraj" == analyzer.ToString())
-                {
-					Scan(); //preskoc hraj
-					int toneCode = GetToneCode(analyzer.ToString()); // ton <c, d, e, f, g, ek2, ... >
-					Scan();	//preskoc ton
-					string parameters = analyzer.ToString();
-
-					while(parameters.IndexOf(":") > -1)
-                    {
-						if ("h:" == parameters)
-                        {
-							Scan();	 //preskoc h:
-							analyzer.Check(Kind.NUMBER);
-							Poke((int)Instruction.Volume);
-							Poke(System.Convert.ToInt32(analyzer.ToString()));
-							Scan();	// preskoc cislo
-                        }
-						else if ("s:" == parameters)
-                        {
-							Scan();  //preskoc s:
-							analyzer.Check(Kind.NUMBER);
-							Poke((int)Instruction.Direction);
-							Poke(System.Convert.ToInt32(analyzer.ToString()));
-							Scan(); // preskoc cislo
-						}
-						else if ("d:" == parameters)
-                        {
-							Scan();  //preskoc d:
-							analyzer.Check(Kind.NUMBER);
-							Poke((int)Instruction.Duration);
-							Poke(System.Convert.ToInt32(analyzer.ToString()));
-							Scan(); // preskoc cislo
-						}
-						parameters = analyzer.ToString();
-                    }
-					
-					Poke((int)Instruction.Sound);
-					Poke(toneCode);
-				}											
-
-				else if ("opakuj" == analyzer.ToString())
-                {
-					Scan();
-					Poke((int)Instruction.Set);
-					Poke(counterAddress);
-					analyzer.Check(Kind.NUMBER);
-					Poke(System.Convert.ToInt32(analyzer.ToString()));
-					Scan();
-					Scan();
-					int bodyAddress = VirtualMachine.adr;
-					Compile(counterAddress - 1);
-					Poke((int)Instruction.Loop);
-					Poke(counterAddress);
-					Poke(bodyAddress);
-					Scan();
-                }
-				
-				else
-                {
-					return;
-                }
-            }
         }
 
         public static int GetInstrumentCode(string instrument)
@@ -113,6 +27,10 @@
 
             switch (instrument)
             {
+				case "husle":
+				case "violin":
+					instrumentCode = (int)GeneralMidiInstrument.Violin;
+					break;
                 case "bicie":
                 case "drums":
                     instrumentCode = (int)GeneralMidiInstrument.SynthDrum;
@@ -206,8 +124,8 @@
 				case "c2":
 					code = (int)Tone.C2;
 					break;
-				case "c2k":
-				case "d2b":
+				case "ck2":
+				case "db2":
 					code = (int)Tone.Cis2;
 					break;
 				case "d2":
@@ -263,22 +181,30 @@
 		/// <returns>Block as root of syntax tree</returns>
 		public Block Parse()
 		{
-			var result = new Block();
+			Block result = new Block();
+			string keyword;
 			while (Kind.WORD == analyzer.kind)
 			{
-				if ("nastroj" == analyzer.ToString())
+				keyword = analyzer.ToString();
+				if ("nastroj" == keyword)
 				{
 					Scan();
 					int instrumentCode = GetInstrumentCode(analyzer.ToString());
-					result.Add(new Instrument(instrumentCode));
+					result.Add(new Instrument(new Const(instrumentCode)));
 					Scan();
 				}
 
-				else if ("hraj" == analyzer.ToString())
+				else if ("hraj" == keyword)
 				{
 					Scan(); //preskoc hraj
-					int toneCode = GetToneCode(analyzer.ToString()); // ton <c, d, e, f, g, ek2, ... >
-					Scan(); //preskoc ton
+					string ton = analyzer.ToString();
+					Scan();
+					if (Kind.NUMBER == analyzer.kind)   // c2, c3, c1, ...
+					{
+						ton += analyzer.ToString();
+						Scan();
+					}
+					int toneCode = GetToneCode(ton); // ton <c, d, e, f, g, ek2, ... >					
 					string parameters = analyzer.ToString();
 
 					int duration = VirtualMachine.DEFAULT_DURATION,
@@ -310,127 +236,266 @@
 						}
 						parameters = analyzer.ToString();
 					}
-
-					result.Add(new Analyzators.Tone(toneCode, duration, volume));
+					result.Add(new Analyzators.Tone(new Const(toneCode), new Const(duration), new Const(volume)));
 				}
 
-				else if ("opakuj" == analyzer.ToString())
+				else if ("opakuj" == keyword || "repeat" == keyword)
 				{
 					Scan();
-					int count = System.Convert.ToInt32(analyzer.ToString());    // a nie je cislo
+					keyword = analyzer.ToString();
+					if ("stále" == keyword || "always" == keyword || "stale" == keyword)
+                    {
+						Scan();
+						result.Add(new WhileTrueLoop(Parse()));
+						Scan();
+                    } 
+					else
+                    {
+						Syntax count = Compare();
+						result.Add(new ForLoop(count, Parse()));
+						Scan();
+					}
+				}
+	
+				else if ("ak" == keyword || "if" == keyword)
+                {
+					Syntax test = null, bodyT = null, bodyF = null;
 					Scan();
-					analyzer.Check(Kind.WORD, "krat");
-					Scan();
-					Block cycleBody = Parse();
-					result.Add(new Cycle(new Const(count), cycleBody));
+					test = Compare();					
+					bodyT = Parse();					
+					keyword = analyzer.ToString();
 					analyzer.Check(Kind.WORD, "koniec");
 					Scan();
-				}
-
-				else if ("vypis" == analyzer.ToString() || "print" == analyzer.ToString())
-				{
-					Scan();
-					result.Add(new Print(new Const(AddSub())));
-				}
-			
-				else if ("losuj" == analyzer.ToString() || "los" == analyzer.ToString())
-                {
-					Scan();
-					analyzer.Check(Kind.SYMBOL, "(");
-					Scan();
-					analyzer.Check(Kind.NUMBER);
+					keyword = analyzer.ToString();
+					if ("inak" == keyword || "else" == keyword) 
+					{
+						Scan();
+						bodyF = Parse();
+						Scan();
+					}
+					analyzer.Check(Kind.WORD, "koniec");
+					result.Add(new IfElse(test, bodyT, bodyF));
                 }
-				
-				else if ("koniec" != analyzer.ToString())
+
+				else if ("def" == keyword || "fun" == keyword || "sub" == keyword || "function" == keyword || "urob" == keyword)
                 {
+					Scan();
+					analyzer.Check(Kind.WORD);
+					string name = analyzer.ToString();
+					if (VirtualMachine.Variables.ContainsKey(name) || VirtualMachine.Subroutines.ContainsKey(name))
+                    {
+						//throw new Exceptions.NameException($"Name {name} is already being used");
+						return result;
+                    }
+					Scan();
+					//analyzer.Check(Kind.WORD, "zac");
+					Subroutine sub = new Subroutine(name, null);
+					VirtualMachine.Subroutines.Add(name, sub);
+					sub.body = Parse();
+					analyzer.Check(Kind.WORD, "koniec");
+					Scan();
+					result.Add(sub);
+                }
+
+				else if ("koniec" == keyword || "end" == keyword)
+                {
+					return result;
+                }
+
+				else if ("vypis" == keyword || "print" == keyword)
+                {
+					Scan();
+					result.Add(new Print(Compare()));
+                }			
+
+				else if ("vlakno" == keyword)
+				{
+					// todo: vlakno == midi kanal                
+					Scan();
 					string name = analyzer.ToString();
 					Scan();
-					analyzer.Check(Kind.SYMBOL, "=");
+					result.Add(new ThreadCommand());
+					result.Add(Parse());
+					analyzer.Check(Kind.WORD, "koniec");
 					Scan();
 
-					result.Add(new Assign(new Variable(name), new Const(AddSub())));
-					if (!VirtualMachine.Variables.ContainsKey(name))
-                    {
-						VirtualMachine.Variables[name] = 2 + VirtualMachine.Variables.Keys.Count;
-                    }
                 }
-
-				else if ("koniec" == analyzer.ToString())
+				
+				else if ("losuj" == keyword)
                 {
-					break;
+					Syntax randomConst = NumberGenerator();
+					result.Add(randomConst);
                 }
 
 				else
                 {
+					string name = analyzer.ToString();
 					Scan();
+					if ("=" != analyzer.ToString())
+                    {
+						if (!VirtualMachine.Subroutines.ContainsKey(name))
+						{
+							throw new System.Collections.Generic.KeyNotFoundException($"{name} is not defined");
+						}
+						result.Add(new Call(name));
+					}
+					
+					else
+                    {
+						if (VirtualMachine.Subroutines.ContainsKey(name))
+						{
+							throw new Exceptions.NameException($"Function {name} is already defined");
+						}
+						
+						Scan();	// =
+						if ("losuj" == analyzer.ToString())
+						{
+							Syntax randomVal = NumberGenerator();
+							result.Add(new Assign(new Variable(name), randomVal));
+							if (!VirtualMachine.Variables.ContainsKey(name))
+                            {
+								VirtualMachine.Variables[name] = 2 + VirtualMachine.Variables.Count;
+							}							
+                        }
+
+						else 
+						{
+							result.Add(new Assign(new Variable(name), Compare()));
+							if (!VirtualMachine.Variables.ContainsKey(name))
+							{
+								VirtualMachine.Variables[name] = 2 + VirtualMachine.Variables.Count;
+							}
+						}
+					}
                 }
 			}
 			return result;
         }	
 	
-		public void JumpToProgramBody()
+		public Syntax Operand()
         {
-			int offset = VirtualMachine.Variables.Count;
-			Poke((int)Instruction.Jmp);
-			Poke(2 + offset);
-			VirtualMachine.adr += offset;
-		}
-
-		public int Number()
-        {
-			analyzer.Check(Kind.NUMBER);
-			int result = System.Convert.ToInt32(analyzer.ToString());
-			Scan();
+			Syntax result;
+			if (analyzer.kind == Kind.WORD)
+            {
+				string name = analyzer.ToString();
+				if (name == "losuj")
+                {
+					result = NumberGenerator();
+                }
+				else if (!VirtualMachine.Variables.ContainsKey(name))
+                {
+					throw new System.Collections.Generic.KeyNotFoundException($"{name} nie je zadeklarovane");
+                }
+				else
+                {
+					result = new Variable(name);
+					Scan();
+				}				
+            }
+			else
+            {
+				analyzer.Check(Kind.NUMBER);
+				result = new Const(System.Convert.ToInt32(analyzer.ToString()));
+				Scan();
+			}			
 			return result;
         }
 
-		public int MulDiv()
+		public Syntax MulDiv()
 		{
-			int result = Number();
-            while ("*" == analyzer.ToString() || "/" == analyzer.ToString())
+            Syntax result = Operand();
+			string operation = analyzer.ToString();
+			while ("*" == operation || "/" == operation)
             {
-				if ("*" == analyzer.ToString())
+				if ("*" == operation)
                 {
 					Scan();
-					result *= Number();
+					result = new Mul(result, AddSub());
                 }
-				else if ("/" == analyzer.ToString())
+				else if ("/" == operation)
                 {
 					Scan();
-					result /= Number();
+					result = new Div(result, AddSub());
 				}
+				operation = analyzer.ToString();
             }	
 			return result;
 		}
 
-		public int AddSub()
+		public Syntax AddSub()
         {
-			int result = MulDiv();
-			while ("+" == analyzer.ToString() || "-" == analyzer.ToString())
+            Syntax result = MulDiv();
+			string operation = analyzer.ToString();
+			while ("+" == operation || "-" == operation)
 			{
-				if ("+" == analyzer.ToString())
+				if ("+" == operation)
 				{
 					Scan();
-					result += Number();
+					result = new Add(result, AddSub());
 				}
-				else if ("-" == analyzer.ToString())
+				else if ("-" == operation)
 				{
 					Scan();
-					result -= Number();
+					result = new Sub(result, AddSub());
 				}
+				operation = analyzer.ToString();
 			}
 			return result;
 		}
 
-		public int Compare()
+		public Syntax Compare()
         {
-			int result = AddSub();
-			if ("=" == analyzer.ToString() || "==" == analyzer.ToString() || "je" == analyzer.ToString())
+			Syntax result = AddSub();
+			string operation = analyzer.ToString();
+			if (">" == operation)
             {
-				result = (result == AddSub()) ? 1 : 0;
+				Scan();
+				result = new Greater(result, AddSub());
             }
+			else if ("<" == operation)
+			{
+				Scan();
+				result = new Lower(result, AddSub());
+			}
+			else if (">=" == operation)
+			{
+				Scan();
+				result = new GreaterEquals(result, AddSub());
+			}
+			else if ("<=" == operation)
+			{
+				Scan();
+				result = new LowerEquals(result, AddSub());
+			}
+			else if ("=" == operation || "==" == operation || "je" == operation)
+			{
+				Scan();
+				result = new Equals(result, AddSub());
+			}
+			else if ("!=" == operation)
+			{
+				Scan();
+				result = new Diff(result, AddSub());
+			}
 			return result;
 		}
 
+		public Syntax NumberGenerator()
+        {
+			Scan();
+			analyzer.Check(Kind.SYMBOL, "(");
+			Scan();
+			analyzer.Check(Kind.NUMBER);
+			int minVal = System.Convert.ToInt32(analyzer.ToString());
+			Scan();
+			analyzer.Check(Kind.SYMBOL, ",");
+			Scan();
+			analyzer.Check(Kind.NUMBER);
+			int maxVal = System.Convert.ToInt32(analyzer.ToString()) + 1; // zahrnieme hornu hranicu
+			Scan();
+			analyzer.Check(Kind.SYMBOL, ")");
+			Scan();
+			return new RandConst(minVal, maxVal);
+		}
 	}
 }

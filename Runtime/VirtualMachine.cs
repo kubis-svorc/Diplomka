@@ -1,31 +1,37 @@
 ﻿using Sanford.Multimedia.Midi;
 using System;
 using System.Collections.Generic;
+using Diplomka.Wrappers;
+using System.Threading.Tasks;
 
 namespace Diplomka.Runtime
 {
     public class VirtualMachine : IDisposable
 	{
+		private const int DEVICE_ID = 0, MemoryAllocSize = 100; // memory alloc
+
 		private static OutputDevice outDevice;
-
-		private const int CHANNEL = 1, DEVICE_ID = 0, MemoryAllocSize = 100; // memory alloc
-
-		public const int DEFAULT_VOLUME = 127, DEFAULT_DURATION = 500;
-
-		private static int midiPos;
-
-		public static int[] mem;
-
-		public static int adr, pc, top;
-
 		private static bool terminated;
 
+		public static Sequence sequence;
+		public static Track track;
+		public static int Channel = 0;
+		public static string ChannelName = "hlavne";
+		
+		public const int DEFAULT_CHANNEL = 1, DEFAULT_VOLUME = 127, DEFAULT_DURATION = 500;
+		public const int MAX_THREAD_THRESHOLD = 4;
+		public static int[] mem;
+		public static int adr, pc, top;
+		
 		public static int CounterAddress = MemoryAllocSize - 1;
-
 		public static IDictionary<string, int> Variables;
+		public static IDictionary<string, Analyzators.Subroutine> Subroutines;
 
-		//public static IDictionary<string, Analyzators.Subroutine> Subroutines;
-			
+		public static List<MyMusicCommand> Thread1;
+		public static List<MyMusicCommand> Thread2;
+		public static List<MyMusicCommand> Thread3;
+		public static List<MyMusicCommand> Thread4;
+
 		static VirtualMachine()
 		{
 			mem = new int[MemoryAllocSize];
@@ -33,28 +39,30 @@ namespace Diplomka.Runtime
 			adr = 0;
 			pc = 0;
 			outDevice = new OutputDevice(DEVICE_ID);
-			track = new Track();
 			Variables = new Dictionary<string, int>();
-			//Subroutines = new Dictionary<string, Analyzators.Subroutine>();
+			Subroutines = new Dictionary<string, Analyzators.Subroutine>();
+			//Threads = new Dictionary<string, List<MyMusicCommand>>();
+			Thread1 = new List<MyMusicCommand>();
+			Thread2 = new List<MyMusicCommand>();
 			top = MemoryAllocSize;
+			track = new Track();
 			sequence = new Sequence();
-			sequence.Add(track);				
-
+			sequence.Add(track);
 		}
-
-		private void AddTicksFromMillies()
-        {
-			
-        }
 
 		public static void Reset()
 		{
 			pc = 0;
 			adr = 0;
 			terminated = false;
+			Channel = 0;
 			Variables.Clear();
 			midiPos = 0;
-			sequence.Clear();
+			Variables.Clear();
+			Subroutines.Clear();
+			//Threads.Clear();
+			Thread1.Clear();
+			Thread2.Clear();
 		}
 
 		public static void Poke(int code)
@@ -63,15 +71,21 @@ namespace Diplomka.Runtime
 			adr++;
 		}
 
-		private static void Execute(ref int volume, ref int duration)
+		private static void Execute()
 		{
 			int index;
 			switch (mem[pc])
 			{
 				case (int)Instruction.Sound:
 					pc++;
-					Play(mem[pc], duration: ref duration, volume: ref volume);
-					pc++;
+					int tone = mem[top];
+					top++;
+					int volume = mem[top];
+					top++;
+					int duration = mem[top];
+					top++;
+					SetTone(tone, duration, volume);
+					//pc++;
 					break;
 
 				case (int)Instruction.Volume:
@@ -86,35 +100,47 @@ namespace Diplomka.Runtime
 					pc++;
 					break;
 
+				case (int)Instruction.Insturment:
+					/*pc++;
+					int tone = mem[top];
+					top++;
+					int volume = mem[top];
+					top++;
+					int duration = mem[top];
+					top++;
+					SetTone(tone, duration, volume);
+					pc++;
+					break;*/
+					pc++;
+					int instrument = mem[top];
+					top++;
+					SetInstrument(instrument);
+					break;
+
 				case (int)Instruction.Loop:
 					pc++;
-					index = mem[pc];
-					pc++;
-					mem[index] = mem[index] - 1;
-					if (mem[index] > 0)
+					mem[top]--;
+					if (mem[top] > 0)
 					{
 						pc = mem[pc];
 					}
 					else
 					{
+						top++;
 						pc++;
 					}
 					break;
 
-				case (int)Instruction.Set:
+				case (int)Instruction.Random:
 					pc++;
-					index = mem[pc];
+					int min = mem[pc];
 					pc++;
-					mem[index] = mem[pc];
+					int max = mem[pc];
 					pc++;
+					top--;
+					mem[top] = new Random().Next(min, max);
 					break;
 
-				case (int)Instruction.Insturment:
-					pc++;
-					SetInstrument(mem[pc]);
-					pc++;
-					break;
-				
 				case (int)Instruction.Push:
 					pc++;
 					top--;
@@ -122,36 +148,7 @@ namespace Diplomka.Runtime
 					pc++;
 					break;
 
-				case (int)Instruction.Minus:
-					pc++;
-					mem[top] = -mem[top];
-					break;
-
-				case (int)Instruction.Add:
-					pc++;
-					mem[top + 1] = mem[top + 1] + mem[top];
-					top++;
-					break;
-
-				case (int)Instruction.Sub:
-					pc++;
-					mem[top + 1] = mem[top + 1] - mem[top];
-					top++;
-					break;
-
-				case (int)Instruction.Mul:
-					pc++;
-					mem[top + 1] = mem[top + 1] * mem[top];
-					top++;
-					break;
-
-				case (int)Instruction.Div:
-					pc++;
-					mem[top + 1] = mem[top + 1] / mem[top];
-					top++;
-					break;
-
-				case (int)Instruction.GetVar:
+				case (int)Instruction.Get:
 					pc++;
 					index = mem[pc];
 					pc++;
@@ -159,7 +156,7 @@ namespace Diplomka.Runtime
 					mem[top] = mem[index];
 					break;
 
-				case (int)Instruction.SetVar:
+				case (int)Instruction.Set:
 					pc++;
 					index = mem[pc];
 					pc++;
@@ -203,56 +200,177 @@ namespace Diplomka.Runtime
 					top++;
 					break;
 
+				case (int)Instruction.Minus:
+					pc++;
+					mem[top] = -mem[top];
+					break;
+
+				case (int)Instruction.Add:
+					pc++;
+					mem[top + 1] = mem[top + 1] + mem[top];
+					top++;
+					break;
+
+				case (int)Instruction.Sub:
+					pc++;
+					mem[top + 1] = mem[top + 1] - mem[top];
+					top++;
+					break;
+
+				case (int)Instruction.Mul:
+					pc++;
+					mem[top + 1] = mem[top + 1] * mem[top];
+					top++;
+					break;
+
+				case (int)Instruction.Div:
+					pc++;
+					mem[top + 1] = mem[top + 1] / mem[top];
+					top++;
+					break;
+
+				case (int)Instruction.Grt:
+					pc++;
+					mem[top + 1] = (mem[top + 1] > mem[top]) ? 1 : 0;
+					top++;
+					break;
+				
+				case (int)Instruction.Lwr:
+					pc++;
+					mem[top + 1] = (mem[top + 1] < mem[top]) ? 1 : 0;
+					top++;
+					break;
+
+				case (int)Instruction.GrEq:
+					pc++;
+					mem[top + 1] = (mem[top + 1] >= mem[top]) ? 1 : 0;
+					top++;
+					break;
+
+				case (int)Instruction.Diff:
+					pc++;
+					mem[top + 1] = (mem[top + 1] != mem[top]) ? 1 : 0;
+					top++;
+					break;
+
+				case (int)Instruction.LrEq:
+					pc++;
+					mem[top + 1] = (mem[top + 1] <= mem[top]) ? 1 : 0;
+					top++;
+					break;
+
+				case (int)Instruction.Eql:
+					pc++;
+					mem[top + 1] = (mem[top + 1] == mem[top]) ? 1 : 0;
+					top++;
+					break;
+
+				case (int)Instruction.Thrd:
+					pc++;
+					Channel++;// = mem[pc];
+					break;
+
 				default:
 					terminated = true;
 					break;
 			}
 		}
 
-        public static void Start()
+        public static async Task Start()
         {
-			int volume = DEFAULT_VOLUME, duration = DEFAULT_DURATION;
 			while (!terminated)
             {
-                Execute(volume: ref volume, duration: ref duration);
+                Execute();
             }
+
         }
-
-        public static void Play(int tone, ref int duration, ref int volume)
-        {
-			ChannelMessage message = new ChannelMessage(ChannelCommand.NoteOn, CHANNEL, tone, volume);
-			track.Insert(midiPos, message);
-			outDevice.Send(message);
-			System.Threading.Thread.Sleep(duration);
-			midiPos += duration;
-
-			message = new ChannelMessage(ChannelCommand.NoteOff, CHANNEL, tone, 0);
-			track.Insert(midiPos, message);
-			midiPos++;
-			outDevice.Send(message);
-
-			volume = DEFAULT_VOLUME;
-			duration = DEFAULT_DURATION;
-		}
 
 		public static void SetInstrument(int instrumentCode)
         {
-			ChannelMessage message = new ChannelMessage(ChannelCommand.ProgramChange, CHANNEL, instrumentCode, 0);
-			outDevice.Send(message);
-			track.Insert(midiPos, message);
-			midiPos ++;
+			ChannelMessage message = new ChannelMessage(ChannelCommand.ProgramChange, Channel, instrumentCode, 0);
+			MyMusicCommand command = new MyMusicCommand(message, 0);
+			StoreCommand(command);
+			//Threads[ChannelName].Add(command);
+			//outDevice.Send(message);			
+			//midiPos++;
 		}
 
-        public static void SetVolume(int volume)
+		public static void SetTone(int tone, int duration, int volume)
+		{
+			ChannelMessage message = new ChannelMessage(ChannelCommand.NoteOn, Channel, tone, volume);
+			MyMusicCommand command = new MyMusicCommand(message, duration);
+
+			//Threads[ChannelName].Add(command);
+			StoreCommand(command);
+
+			message = new ChannelMessage(ChannelCommand.NoteOff, Channel, tone, 0);
+			command = new MyMusicCommand(message, duration);
+
+			//Threads[ChannelName].Add(command);
+			StoreCommand(command);
+        }
+
+		public static void SetVolume(int volume)
         {
 			var message = new ChannelMessage(command:ChannelCommand.Controller, 
-											midiChannel: CHANNEL, 
+											midiChannel: Channel, 
 											data1: (int)ControllerType.Volume, 
 											data2: volume);
-			track.Insert(midiPos, message);
-			midiPos++;
-			outDevice.Send(message);
+			MyMusicCommand command = new MyMusicCommand(message, 0);
+			StoreCommand(command);
+			//Threads[ChannelName].Add(command);
+			//midiPos++;
+			//outDevice.Send(message);
         }
+
+		public static async Task Play() 
+		{
+			Task thread1 = Task.Run(() => 
+			{
+                foreach (MyMusicCommand cmd in Thread1)
+                {
+					outDevice.Send(cmd.command);
+					System.Threading.Thread.Sleep(cmd.duration);
+                }
+			});
+
+			Task thread2 = Task.Run(() =>
+			{
+				foreach (MyMusicCommand cmd in Thread2)
+				{
+					outDevice.Send(cmd.command);
+					System.Threading.Thread.Sleep(cmd.duration);
+				}
+			});
+
+			Task thread3 = Task.Run(() => 
+			{
+                foreach (MyMusicCommand cmd in Thread3)
+                {
+					outDevice.Send(cmd.command);
+					System.Threading.Thread.Sleep(cmd.duration);
+				}
+			});
+
+			Task thread4 = Task.Run(() =>
+			{
+				foreach (MyMusicCommand cmd in Thread3)
+				{
+					outDevice.Send(cmd.command);
+					System.Threading.Thread.Sleep(cmd.duration);
+				}
+			});
+
+			await Task.WhenAll(new [] { thread1, thread2, thread3, thread4 });
+		}
+		
+		public static void SetJumpToProgramBody()
+        {
+			int offset = Variables.Count;
+            Poke((int)Instruction.Jmp);
+            Poke(2 + offset);
+            adr += offset;
+		}
 		
 		public VirtualMachine()
         {
@@ -269,9 +387,22 @@ namespace Diplomka.Runtime
 				mem[i] = -1;
 			}
 			Variables.Clear();
-            outDevice.Dispose();
+			Subroutines.Clear();
         }
 
+		private static void StoreCommand(MyMusicCommand command)
+        {
+			switch (Channel)
+			{
+				case 2:
+					Thread2.Add(command);
+					break;
+				default:
+					Thread1.Add(command);
+					break;
+			}
+		}
+		
 	}
 
 }
