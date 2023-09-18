@@ -9,13 +9,11 @@
         private delegate void Scanner();    // to use shortcut Scan() for analyzer.Scan()
         private delegate void Poker(int i); // to use shortcut Poke(code) for VirtualMachine.Poke(code)
 		private Scanner Scan;	// procedure reference
-        private Poker Poke;     // procedure reference
 		
 		public Compiler()
         {
             analyzer = new LexicalAnalyzer();
             Scan = analyzer.Scan;
-			Poke = VirtualMachine.Poke;
         }
 
         public Compiler(string programText) : this()
@@ -183,7 +181,7 @@
 		/// <returns>Block as root of syntax tree</returns>
 		public Block Parse()
 		{
-			var result = new Block();
+			Block result = new Block();
 			string keyword;
 			while (Kind.WORD == analyzer.kind)
 			{
@@ -192,7 +190,7 @@
 				{
 					Scan();
 					int instrumentCode = GetInstrumentCode(analyzer.ToString());
-					result.Add(new Instrument(instrumentCode));
+					result.Add(new Instrument(new Const(instrumentCode)));
 					Scan();
 				}
 
@@ -238,7 +236,7 @@
 						}
 						parameters = analyzer.ToString();
 					}
-					result.Add(new Analyzators.Tone(toneCode, duration, volume));
+					result.Add(new Analyzators.Tone(new Const(toneCode), new Const(duration), new Const(volume)));
 				}
 
 				else if ("opakuj" == keyword || "repeat" == keyword)
@@ -250,22 +248,15 @@
 						Scan();
 						result.Add(new WhileTrueLoop(Parse()));
 						Scan();
-                    } else
+                    } 
+					else
                     {
 						Syntax count = Compare();
 						result.Add(new ForLoop(count, Parse()));
 						Scan();
 					}
 				}
-
-				else if ("losuj" == keyword || "los" == keyword)
-                {
-					Scan();
-					analyzer.Check(Kind.SYMBOL, "(");
-					Scan();
-					analyzer.Check(Kind.NUMBER);
-                }
-					
+	
 				else if ("ak" == keyword || "if" == keyword)
                 {
 					Syntax test = null, bodyT = null, bodyF = null;
@@ -273,16 +264,20 @@
 					test = Compare();					
 					bodyT = Parse();					
 					keyword = analyzer.ToString();
+					analyzer.Check(Kind.WORD, "koniec");
+					Scan();
+					keyword = analyzer.ToString();
 					if ("inak" == keyword || "else" == keyword) 
 					{
 						Scan();
 						bodyF = Parse();
 						Scan();
 					}
+					analyzer.Check(Kind.WORD, "koniec");
 					result.Add(new IfElse(test, bodyT, bodyF));
                 }
 
-				else if ("def" == keyword || "fun" == keyword || "sub" == keyword || "function" == keyword)
+				else if ("def" == keyword || "fun" == keyword || "sub" == keyword || "function" == keyword || "urob" == keyword)
                 {
 					Scan();
 					analyzer.Check(Kind.WORD);
@@ -307,6 +302,36 @@
 					return result;
                 }
 
+				else if ("vypis" == keyword || "print" == keyword)
+                {
+					Scan();
+					result.Add(new Print(Compare()));
+                }			
+
+				else if ("vlakno" == keyword)
+				{
+					// todo: vlakno == midi kanal                
+					Scan();
+					string name = analyzer.ToString();
+					//if (VirtualMachine.Threads.ContainsKey(name))
+     //               {
+					//	throw new Exceptions.NameException($"Vlákno {name} už existuje");
+     //               }
+					//VirtualMachine.Threads.Add(name, new System.Collections.Generic.List<Wrappers.MyMusicCommand>());
+					Scan();
+					result.Add(new ThreadCommand());
+					result.Add(Parse());
+					analyzer.Check(Kind.WORD, "koniec");
+					Scan();
+
+                }
+				
+				else if ("losuj" == keyword)
+                {
+					Syntax randomConst = NumberGenerator();
+					result.Add(randomConst);
+                }
+
 				else
                 {
 					string name = analyzer.ToString();
@@ -319,120 +344,140 @@
 						}
 						result.Add(new Call(name));
 					}
+					
 					else
                     {
 						if (VirtualMachine.Subroutines.ContainsKey(name))
-                        {
+						{
 							throw new Exceptions.NameException($"Function {name} is already defined");
+						}
+						
+						Scan();	// =
+						if ("losuj" == analyzer.ToString())
+						{
+							Syntax randomVal = NumberGenerator();
+							result.Add(new Assign(new Variable(name), randomVal));
+							if (!VirtualMachine.Variables.ContainsKey(name))
+                            {
+								VirtualMachine.Variables[name] = 2 + VirtualMachine.Variables.Count;
+							}							
                         }
-						Scan();
-						result.Add(new Assign(new Variable(name), Compare()));
-						if (!VirtualMachine.Variables.ContainsKey(name))
-                        {
-							VirtualMachine.Variables[name] = 2 + VirtualMachine.Variables.Count;
-                        }
+
+						else 
+						{
+							result.Add(new Assign(new Variable(name), Compare()));
+							if (!VirtualMachine.Variables.ContainsKey(name))
+							{
+								VirtualMachine.Variables[name] = 2 + VirtualMachine.Variables.Count;
+							}
+						}
 					}
                 }
 			}
 			return result;
         }	
 	
-		public void JumpToProgramBody()
-        {
-			int offset = VirtualMachine.Variables.Count;
-			Poke((int)Instruction.Jmp);
-			Poke(2 + offset);
-			VirtualMachine.adr += offset;
-		}
-
 		public Syntax Operand()
         {
 			Syntax result;
 			if (analyzer.kind == Kind.WORD)
             {
 				string name = analyzer.ToString();
-				if (!VirtualMachine.Variables.ContainsKey(name))
+				if (name == "losuj")
+                {
+					result = NumberGenerator();
+                }
+				else if (!VirtualMachine.Variables.ContainsKey(name))
                 {
 					throw new System.Collections.Generic.KeyNotFoundException($"{name} nie je zadeklarovane");
                 }
-				result = new Variable(name);
+				else
+                {
+					result = new Variable(name);
+					Scan();
+				}				
             }
 			else
             {
 				analyzer.Check(Kind.NUMBER);
 				result = new Const(System.Convert.ToInt32(analyzer.ToString()));
-            }
-			Scan();
+				Scan();
+			}			
 			return result;
         }
 
 		public Syntax MulDiv()
 		{
-			var result = Operand();
-            while ("*" == analyzer.ToString() || "/" == analyzer.ToString())
+            Syntax result = Operand();
+			string operation = analyzer.ToString();
+			while ("*" == operation || "/" == operation)
             {
-				if ("*" == analyzer.ToString())
+				if ("*" == operation)
                 {
 					Scan();
 					result = new Mul(result, AddSub());
                 }
-				else if ("/" == analyzer.ToString())
+				else if ("/" == operation)
                 {
 					Scan();
 					result = new Div(result, AddSub());
 				}
+				operation = analyzer.ToString();
             }	
 			return result;
 		}
 
 		public Syntax AddSub()
         {
-			var result = MulDiv();
-			while ("+" == analyzer.ToString() || "-" == analyzer.ToString())
+            Syntax result = MulDiv();
+			string operation = analyzer.ToString();
+			while ("+" == operation || "-" == operation)
 			{
-				if ("+" == analyzer.ToString())
+				if ("+" == operation)
 				{
 					Scan();
 					result = new Add(result, AddSub());
 				}
-				else if ("-" == analyzer.ToString())
+				else if ("-" == operation)
 				{
 					Scan();
 					result = new Sub(result, AddSub());
 				}
+				operation = analyzer.ToString();
 			}
 			return result;
 		}
 
 		public Syntax Compare()
         {
-			var result = AddSub();
-			if (">" == analyzer.ToString())
+			Syntax result = AddSub();
+			string operation = analyzer.ToString();
+			if (">" == operation)
             {
 				Scan();
 				result = new Greater(result, AddSub());
             }
-			else if ("<" == analyzer.ToString())
+			else if ("<" == operation)
 			{
 				Scan();
 				result = new Lower(result, AddSub());
 			}
-			else if (">=" == analyzer.ToString())
+			else if (">=" == operation)
 			{
 				Scan();
-				result = new Lower(result, AddSub());
+				result = new GreaterEquals(result, AddSub());
 			}
-			else if ("<=" == analyzer.ToString())
+			else if ("<=" == operation)
 			{
 				Scan();
 				result = new LowerEquals(result, AddSub());
 			}
-			else if ("=" == analyzer.ToString())
+			else if ("=" == operation || "==" == operation || "je" == operation)
 			{
 				Scan();
 				result = new Equals(result, AddSub());
 			}
-			else if ("!=" == analyzer.ToString())
+			else if ("!=" == operation)
 			{
 				Scan();
 				result = new Diff(result, AddSub());
@@ -440,5 +485,22 @@
 			return result;
 		}
 
+		public Syntax NumberGenerator()
+        {
+			Scan();
+			analyzer.Check(Kind.SYMBOL, "(");
+			Scan();
+			analyzer.Check(Kind.NUMBER);
+			int minVal = System.Convert.ToInt32(analyzer.ToString());
+			Scan();
+			analyzer.Check(Kind.SYMBOL, ",");
+			Scan();
+			analyzer.Check(Kind.NUMBER);
+			int maxVal = System.Convert.ToInt32(analyzer.ToString()) + 1; // zahrnieme hornu hranicu
+			Scan();
+			analyzer.Check(Kind.SYMBOL, ")");
+			Scan();
+			return new RandConst(minVal, maxVal);
+		}
 	}
 }

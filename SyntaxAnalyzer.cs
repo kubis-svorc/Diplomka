@@ -25,56 +25,70 @@
 		{
 			VirtualMachine.Poke((int)Instruction.Push);
 			VirtualMachine.Poke(_value);
+        }
+
+    }
+
+    public class RandConst : Syntax	
+    {
+		private int _minVal, _maxVal;		
+
+        public RandConst(int minVal, int maxVal) : base()
+        {
+            this._minVal = minVal;
+            this._maxVal = maxVal;
+        }
+
+        public override void Generate()
+        {
+			int generated = new System.Random().Next(_minVal, _maxVal + 1);
+			VirtualMachine.Poke((int)Instruction.Random);
+			VirtualMachine.Poke(_minVal);
+			VirtualMachine.Poke(_maxVal);
 		}
+    }
 
-	}
-
-	public abstract class MidiCommand : Syntax 
+    public abstract class MidiCommand : Syntax 
 	{
-		protected int _param;
-
-		public MidiCommand(int param)
+		public MidiCommand()
 		{
-			_param = param;
+			
 		}
 	}
 
 	public class Tone : MidiCommand
 	{
-		private int _duration, _volume;
+		private Const _toneCode, _duration, _volume;
 
-		public Tone(int toneCode, int duration, int volume)
-			: base(toneCode)
+		public Tone(Const toneCode, Const duration, Const volume): base()
 		{
+			_toneCode = toneCode;
 			_duration = duration;
 			_volume = volume;
 		}
 
 		public override void Generate()
 		{
-			VirtualMachine.Poke((int)Instruction.Duration);
-			VirtualMachine.Poke(_duration);
-
-			VirtualMachine.Poke((int)Instruction.Volume);
-			VirtualMachine.Poke(_volume);
-
+			_duration.Generate();
+			_volume.Generate();
+			_toneCode.Generate();
 			VirtualMachine.Poke((int)Instruction.Sound);
-			VirtualMachine.Poke(_param);
-			
 		}
 	}
 
 	public class Instrument : MidiCommand
 	{
+		private Syntax _instrumentCode;
 
-		public Instrument(int instrumentCode) : base(instrumentCode)
+		public Instrument(Const instrumentCode) : base()
 		{
+			_instrumentCode = instrumentCode;
 		}
 
 		public override void Generate()
 		{
+			_instrumentCode.Generate();
 			VirtualMachine.Poke((int)Instruction.Insturment);
-			VirtualMachine.Poke(_param);
 		}
 	}
 
@@ -465,5 +479,13 @@
 			VirtualMachine.Poke((int)Instruction.Diff);
         }
     }
-	
+
+    public class ThreadCommand : Syntax
+    {
+        public override void Generate()
+        {
+			VirtualMachine.Poke((int)Instruction.Thrd);
+        }
+    }
+
 }
