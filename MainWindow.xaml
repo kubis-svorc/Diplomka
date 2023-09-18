@@ -91,7 +91,8 @@
                 <ColumnDefinition Width="Auto" MinWidth="107.457" />
                 <ColumnDefinition Width="Auto" MinWidth="0" />
             </Grid.ColumnDefinitions>
-            <TextBox Text="" Margin="7,28,-674,0" VerticalAlignment="Top" Height="329" RenderTransformOrigin="0.5,0.5" Grid.ColumnSpan="2" Name="CodeTab" AcceptsReturn="True" AcceptsTab="True">
+            <TextBox Text="" Margin="7,28,-674,0" VerticalAlignment="Top" Height="329" RenderTransformOrigin="0.5,0.5" Grid.ColumnSpan="2" Name="CodeTab" AcceptsReturn="True" AcceptsTab="True"
+                     Background="Black" Foreground="LightGray">
                 <TextBox.RenderTransform>
                     <TransformGroup>
                         <ScaleTransform/>
@@ -101,7 +102,7 @@
                     </TransformGroup>
                 </TextBox.RenderTransform>
             </TextBox>
-            <TextBox Margin="6,363,-673,0" VerticalAlignment="Top" Height="204" Grid.ColumnSpan="2" AcceptsReturn="True" IsReadOnly="True" Name="ErrorTab" Background="MistyRose"/>
+            <TextBox Margin="6,363,-673,0" VerticalAlignment="Top" Height="204" Grid.ColumnSpan="2" AcceptsReturn="True" IsReadOnly="True" Name="ErrorTab" Background="Black" Foreground="White"/>
         </Grid>
     </Grid>
 </Window>
