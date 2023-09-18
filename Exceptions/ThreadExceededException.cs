@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Diplomka.Exceptions
+﻿namespace Diplomka.Exceptions
 {
-    class ThreadExceededException
+    public class ThreadExceededException : ApplicationException
     {
+        public ThreadExceededException(string message) : base(message)
+        {
+            ;
+        }
     }
 }
