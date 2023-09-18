@@ -92,7 +92,7 @@ koniec".ToLower();
 				Console.WriteLine("program started");
 				await VirtualMachine.Start();
 				Console.WriteLine("program playing");
-				await VirtualMachine.Play();
+				//await VirtualMachine.Play();
 				Console.WriteLine("playing finished");
 			}
 		}

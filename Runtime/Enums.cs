@@ -12,7 +12,6 @@
 	{
 		// musical
 		Sound		= 1,
-		Volume		= 2,
 		Duration	= 3,
 		Direction	= 4,
 		Insturment	= 5,

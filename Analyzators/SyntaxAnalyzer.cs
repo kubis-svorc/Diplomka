@@ -484,6 +484,10 @@
     {
         public override void Generate()
         {
+			if (VirtualMachine.Channel > VirtualMachine.MAX_THREAD_THRESHOLD)
+            {
+				throw new Exceptions.ThreadExceededException("Maximálny počet vlákien je 4");
+            }
 			VirtualMachine.Poke((int)Instruction.Thrd);
         }
     }

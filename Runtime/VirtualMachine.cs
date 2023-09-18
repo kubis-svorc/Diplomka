@@ -57,12 +57,13 @@ namespace Diplomka.Runtime
 			terminated = false;
 			Channel = 0;
 			Variables.Clear();
-			midiPos = 0;
 			Variables.Clear();
 			Subroutines.Clear();
-			//Threads.Clear();
-			Thread1.Clear();
-			Thread2.Clear();
+
+			//Thread1.Clear();
+			//Thread2.Clear();
+			//Thread3.Clear();
+			//Thread4.Clear();
 		}
 
 		public static void Poke(int code)
@@ -85,32 +86,9 @@ namespace Diplomka.Runtime
 					int duration = mem[top];
 					top++;
 					SetTone(tone, duration, volume);
-					//pc++;
-					break;
-
-				case (int)Instruction.Volume:
-					pc++;
-					volume = mem[pc];
-					pc++;
-					break;
-
-				case (int)Instruction.Duration:
-					pc++;
-					duration = mem[pc];
-					pc++;
 					break;
 
 				case (int)Instruction.Insturment:
-					/*pc++;
-					int tone = mem[top];
-					top++;
-					int volume = mem[top];
-					top++;
-					int duration = mem[top];
-					top++;
-					SetTone(tone, duration, volume);
-					pc++;
-					break;*/
 					pc++;
 					int instrument = mem[top];
 					top++;
@@ -285,42 +263,52 @@ namespace Diplomka.Runtime
 
         }
 
-		public static void SetInstrument(int instrumentCode)
+		public async static void SetInstrument(int instrumentCode)
         {
-			ChannelMessage message = new ChannelMessage(ChannelCommand.ProgramChange, Channel, instrumentCode, 0);
-			MyMusicCommand command = new MyMusicCommand(message, 0);
-			StoreCommand(command);
+			
+			//MyMusicCommand command = new MyMusicCommand(message, 0);
+			//StoreCommand(command);
+			await Task.Run(() => 
+			{
+				ChannelMessage message = new ChannelMessage(ChannelCommand.ProgramChange, Channel, instrumentCode, 0);
+				outDevice.Send(message);
+				System.Threading.Thread.Sleep(0);
+			});
 			//Threads[ChannelName].Add(command);
 			//outDevice.Send(message);			
 			//midiPos++;
 		}
 
-		public static void SetTone(int tone, int duration, int volume)
+		public async static void SetTone(int tone, int duration, int volume)
 		{
+			//MyMusicCommand command = new MyMusicCommand(message, duration);
+
+			//Threads[ChannelName].Add(command);
+			//StoreCommand(command);
 			ChannelMessage message = new ChannelMessage(ChannelCommand.NoteOn, Channel, tone, volume);
-			MyMusicCommand command = new MyMusicCommand(message, duration);
-
-			//Threads[ChannelName].Add(command);
-			StoreCommand(command);
-
-			message = new ChannelMessage(ChannelCommand.NoteOff, Channel, tone, 0);
-			command = new MyMusicCommand(message, duration);
-
-			//Threads[ChannelName].Add(command);
-			StoreCommand(command);
+			await Task.Run(() => 
+			{
+				outDevice.Send(message);
+				System.Threading.Thread.Sleep(duration);
+			});
+			message = new ChannelMessage(ChannelCommand.NoteOff, message.MidiChannel, tone, 0);
+			await Task.Run(() => 
+			{	
+				outDevice.Send(message);
+				System.Threading.Thread.Sleep(duration);
+			});
         }
 
-		public static void SetVolume(int volume)
+		public static async Task SetVolume(int volume)
         {
-			var message = new ChannelMessage(command:ChannelCommand.Controller, 
-											midiChannel: Channel, 
-											data1: (int)ControllerType.Volume, 
-											data2: volume);
-			MyMusicCommand command = new MyMusicCommand(message, 0);
-			StoreCommand(command);
-			//Threads[ChannelName].Add(command);
-			//midiPos++;
-			//outDevice.Send(message);
+			//MyMusicCommand command = new MyMusicCommand(message, 0);
+			await Task.Run(() => 
+			{
+				ChannelMessage message = new ChannelMessage(ChannelCommand.Controller, Channel, (int)ControllerType.Volume, volume);
+				outDevice.Send(message);
+				System.Threading.Thread.Sleep(0);
+			});
+			//StoreCommand(command);
         }
 
 		public static async Task Play() 
@@ -394,6 +382,12 @@ namespace Diplomka.Runtime
         {
 			switch (Channel)
 			{
+				case 4:
+					Thread4.Add(command);
+					break;
+				case 3:
+					Thread3.Add(command);
+					break;
 				case 2:
 					Thread2.Add(command);
 					break;
