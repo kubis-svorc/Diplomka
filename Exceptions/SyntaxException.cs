@@ -1,13 +1,10 @@
 ﻿namespace Diplomka.Exceptions
 {
-    class SyntaxException : System.Exception
+    class SyntaxException : ApplicationException
     {
-        public SyntaxException() : base()
-        { 
-        }
-
         public SyntaxException(string message) : base(message)
         {
+            ;
         }
     }
 }
