@@ -314,8 +314,8 @@
 					Scan();
 					string name = analyzer.ToString();
 					Scan();
-					result.Add(new ThreadCommand());
-					result.Add(Parse());
+					ThreadCommand thread = new ThreadCommand(Parse());
+					result.Add(thread);
 					analyzer.Check(Kind.WORD, "koniec");
 					Scan();
 
@@ -347,7 +347,7 @@
 							throw new Exceptions.NameException($"Function {name} is already defined");
 						}
 						
-						Scan();	// =
+						Scan();
 						if ("losuj" == analyzer.ToString())
 						{
 							Syntax randomVal = NumberGenerator();
@@ -369,7 +369,7 @@
 					}
                 }
 			}
-			return result;
+			return result;	
         }	
 	
 		public Syntax Operand()

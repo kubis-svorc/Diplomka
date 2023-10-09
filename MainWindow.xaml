@@ -3,29 +3,25 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Diplomka"
         mc:Ignorable="d"
-        Title="MainWindow" Height="600" Width="800"
-        KeyDown="Window_KeyDown">
+        Title="Diplomka"
+        x:Name="MyWindow" Width="826" Height="554">
 
     <Window.CommandBindings>
-        <CommandBinding Command="Save" Executed="OnSave"/>
+        <CommandBinding Command="Save" Executed="OnSave"/>        
     </Window.CommandBindings>
     <Window.InputBindings>
-        <KeyBinding Key="S" Modifiers="Ctrl" Command="Save"/>
+        <KeyBinding Key="S" Modifiers="Ctrl" Command="Save"/>        
     </Window.InputBindings>
 
-    <Grid>
+    <Grid Margin="0,0,0,0">
         <!-- Navigation menu bar -->
-        <Menu>
+        <Menu Margin="0,0,0,24">
             <MenuItem Header="_File">
                 <MenuItem Header="_New"/>
                 <MenuItem Header="_Open"/>
                 <Separator/>
-                <MenuItem Header="_Save">
-                    <MenuItem.InputBindings>
-                        <KeyBinding Key="S" Modifiers="Ctrl" />
-                    </MenuItem.InputBindings>
+                <MenuItem Header="_Save">                    
                 </MenuItem>
                 <MenuItem Header="Save _As"/>
                 <Separator/>
@@ -41,49 +37,7 @@
             </MenuItem>
         </Menu>
 
-        <!--<Grid>
-             Text boxes for Tab 1 
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" MinWidth="107.457" />
-                <ColumnDefinition Width="Auto" MinWidth="0" />
-            </Grid.ColumnDefinitions>
-            <TextBox Text="" Margin="10,46,-677,0" VerticalAlignment="Top" Height="287" RenderTransformOrigin="0.5,0.5" Grid.ColumnSpan="2" Name="CodeTab" AcceptsReturn="True" AcceptsTab="True">
-                <TextBox.RenderTransform>
-                    <TransformGroup>
-                        <ScaleTransform/>
-                        <SkewTransform AngleX="0"/>
-                        <RotateTransform/>
-                        <TranslateTransform X="0"/>
-                    </TransformGroup>
-                </TextBox.RenderTransform>
-            </TextBox>
-            <TextBox Margin="10,366,-677,0" VerticalAlignment="Top" Height="204" Grid.ColumnSpan="2" AcceptsReturn="True" IsReadOnly="True" Name="ErrorTab"/>
-        </Grid>-->
-
-        <!-- Centered tab items -->
-        <!--<TabControl Margin="0,40,0,0">
-            <TabItem Header="Tab 1">
-                
-            </TabItem>
-            
-        <TabItem Header="Tab 2">
-                <Grid>
-                    
-        -->
-        <!-- Text boxes for Tab 2 -->
-        <!--
-        
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <TextBox Text="Tab 2 Textbox 1" Margin="10,10,10,0" VerticalAlignment="Top"/>
-                    <TextBox Text="Tab 2 Textbox 2" Margin="10,0,10,10" Grid.Column="1" VerticalAlignment="Bottom"/>
-                </Grid>
-            </TabItem>
-        
-        </TabControl>-->
-        <Grid>
+        <Grid Margin="0,0,0,0">
 
             <!-- Text boxes for Tab 1 -->
 
@@ -91,18 +45,18 @@
                 <ColumnDefinition Width="Auto" MinWidth="107.457" />
                 <ColumnDefinition Width="Auto" MinWidth="0" />
             </Grid.ColumnDefinitions>
-            <TextBox Text="" Margin="7,28,-674,0" VerticalAlignment="Top" Height="329" RenderTransformOrigin="0.5,0.5" Grid.ColumnSpan="2" Name="CodeTab" AcceptsReturn="True" AcceptsTab="True"
-                     Background="Black" Foreground="LightGray">
-                <TextBox.RenderTransform>
-                    <TransformGroup>
-                        <ScaleTransform/>
-                        <SkewTransform AngleX="0"/>
-                        <RotateTransform/>
-                        <TranslateTransform X="0"/>
-                    </TransformGroup>
-                </TextBox.RenderTransform>
-            </TextBox>
-            <TextBox Margin="6,363,-673,0" VerticalAlignment="Top" Height="204" Grid.ColumnSpan="2" AcceptsReturn="True" IsReadOnly="True" Name="ErrorTab" Background="Black" Foreground="White"/>
+            <TextBox Text="" Margin="6,28,-673,0" VerticalAlignment="Top" Height="330" RenderTransformOrigin="0.5,0.5" Grid.ColumnSpan="2" AcceptsReturn="True" Background="Black" Foreground="LightGray"
+                      x:Name="CodeTab" Grid.Row="1" 
+                     PreviewKeyDown="CodeTab_PreviewKeyDown"
+                     PreviewKeyUp="CodeTab_PreviewKeyUp" 
+                     KeyUp="CodeTab_KeyUp"/>
+
+            <ListView x:Name="SuggestionList" SelectionChanged="Suggestion_Selected" Margin="6,362,-673,50" 
+                      Grid.ColumnSpan="2" Background="Black" SelectionMode="Single" Foreground="White" Height="72" VerticalAlignment="Top" 
+                      Grid.Row="2" Width="800">
+            </ListView>
+            <TextBox Margin="6,439,-673,0" VerticalAlignment="Top" Height="72" Grid.ColumnSpan="2" AcceptsReturn="True" IsReadOnly="True" Name="ErrorTab" Background="Black" Foreground="White"
+                     Grid.Row="3"/>
         </Grid>
     </Grid>
 </Window>

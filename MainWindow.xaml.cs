@@ -5,26 +5,37 @@ using System.Windows.Input;
 using Diplomka.Runtime;
 using Microsoft.Win32;
 using Diplomka.Analyzators;
+using System.Linq;
 using Console = System.Diagnostics.Debug;
-using System.Threading.Tasks;
+using System.Windows.Controls;
 
 namespace Diplomka
 {
 	public partial class MainWindow : Window
 	{
+		private bool IsShiftPressed = false;
+
+		public static System.Threading.CancellationTokenSource CancelToken;
+		
 		public MainWindow()
 		{
 			InitializeComponent();
-			//CodeTab.Text = "hraj E#2 h:100 d:250\r\n\r\nhraj c".ToLower();
+			
 			CodeTab.Text = @"vlakno hlavné
 	nastroj organ
-	hraj c d:1000 h:0 
+	hraj c d:1000 h:100 
+	nastroj flauta 
+	hraj e d:1000 h:100
 koniec
+
 vlakno druhe
-	nastroj flauta
-	hraj c d:1000 h:0
+	nastroj bicie
+	hraj e d:1000 h:100 
+	nastroj spev 
+	hraj g d:1000 h:100
 koniec".ToLower();
 			//CodeTab.Text = "a = 5\r\nvypis a".ToLower();
+			CancelToken = new System.Threading.CancellationTokenSource();
 		}
 
 		private void OnExitClick(object sender, RoutedEventArgs e)
@@ -47,7 +58,7 @@ koniec".ToLower();
 			}
 		}
 
-		private async Task<Syntax> Compile()
+		private Syntax Compile()
 		{
 			var compiler = new Compiler(CodeTab.Text.ToLower());
 			try
@@ -69,38 +80,126 @@ koniec".ToLower();
 			_ = MessageBox.Show(message, "Info", MessageBoxButton.OK);
 		}
 
-		private async void Window_KeyDown(object sender, KeyEventArgs e)
+        private async System.Threading.Tasks.Task StartExec(System.Threading.CancellationToken cancellationToken) 
 		{
-			if (e.Key == Key.F5)
+			VirtualMachine.Reset();
+			CodeTab.IsReadOnly = true;
+			Syntax tree = Compile();
+			CodeTab.IsReadOnly = false;
+			if (null == tree)
 			{
-                //MidiPlayer.PlayMultipleNotes();
-                //return;
-                // preparation
-                VirtualMachine.Reset();
-				CodeTab.IsReadOnly = true;
-				Syntax tree = await Compile();
-				CodeTab.IsReadOnly = false;
-				if (null == tree)
-                {
-                    Console.WriteLine("tree is null");
-					return;
-                }
-				// execution
-				Console.WriteLine("Parse tree finished");
-				VirtualMachine.SetJumpToProgramBody();
-				tree.Generate();
-				Console.WriteLine("program started");
-				await VirtualMachine.Start();
-				Console.WriteLine("program playing");
-				//await VirtualMachine.Play();
-				Console.WriteLine("playing finished");
+				Console.WriteLine("tree is null");
+				return;
 			}
+			// execution
+			Console.WriteLine("Parse tree finished");
+			VirtualMachine.SetJumpToProgramBody();
+			tree.Generate();
+			Console.WriteLine("program started");
+			VirtualMachine.Start();
+			Console.WriteLine("program playing");
+			try
+            {
+				await VirtualMachine.Play(CancelToken.Token);
+			}
+			catch (System.Threading.Tasks.TaskCanceledException ex)
+            {
+				Console.WriteLine(ex.Message);
+            }
+			Console.WriteLine("playing finished");
 		}
+
+		private void CodeTab_KeyUp(object sender, KeyEventArgs e)
+		{
+			if (Key.F1 == e.Key)
+			{
+				_ = SuggestionList.Focus();
+				return;
+			}
+
+			int from, until;
+			
+			for (from = CodeTab.CaretIndex - 1; 0 < from && from < CodeTab.Text.Length && !char.IsWhiteSpace(CodeTab.Text[from]); from--)
+			{ ; }
+
+			for (until = CodeTab.CaretIndex + 1; 0 < until && until < CodeTab.Text.Length && !char.IsWhiteSpace(CodeTab.Text[until]); until++)
+			{ ; }
+			
+			if (from < 0)
+            {
+				from = 0;
+            }
+
+			if (until > CodeTab.Text.Length)
+            {
+				until = CodeTab.Text.Length;
+            }
+
+			string wordUnderCaret = CodeTab.Text.Substring(from, until - from).Trim();
+
+			string[] suggestions = Wrappers
+				.KeywordContainer
+				.Keywords
+				.Where(kw => System.Text.RegularExpressions.Regex.IsMatch(kw, wordUnderCaret))
+				.ToArray();
+			SuggestionList.ItemsSource = suggestions;	
+		}
+
+		private void Suggestion_Selected(object sender, SelectionChangedEventArgs e) 
+		{
+            if (SuggestionList.SelectedItem != null)
+            {
+				//todo: ako vlozit text na miesto?! 				
+				_ = CodeTab.Focus();
+            }            
+        }
 
 		protected override void OnClosing(CancelEventArgs e)
 		{
 			base.OnClosing(e);
 		}
+		
+        private void CodeTab_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+			if (Key.LeftShift == e.Key || Key.RightShift == e.Key)
+            {
+				IsShiftPressed = true;
+            }
+        }
 
-	}
+        private async void CodeTab_PreviewKeyUp(object sender, KeyEventArgs e)
+        {
+			if (Key.F5 == e.Key)
+			{
+				if (IsShiftPressed)
+				{
+					if (!CancelToken.Token.IsCancellationRequested)
+                    {
+						CancelToken.Cancel();
+                    }
+				}
+				else
+				{
+					if (!CancelToken.Token.IsCancellationRequested)
+                    {
+						CancelToken.Cancel();
+                    }
+					CancelToken = new System.Threading.CancellationTokenSource();
+                    try
+                    {
+						await StartExec(CancelToken.Token);
+                    }
+                    catch (System.Threading.Tasks.TaskCanceledException ex)
+                    {
+						Console.WriteLine(ex.Message);
+                    }   
+				}
+			}
+
+			else if (Key.LeftShift == e.Key || Key.RightShift == e.Key)
+			{
+				IsShiftPressed = false;
+			}
+		}
+    }
 }

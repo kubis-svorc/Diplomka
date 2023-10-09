@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using Diplomka.Wrappers;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Diplomka.Runtime
@@ -27,10 +28,10 @@ namespace Diplomka.Runtime
 		public static IDictionary<string, int> Variables;
 		public static IDictionary<string, Analyzators.Subroutine> Subroutines;
 
-		public static List<MyMusicCommand> Thread1;
-		public static List<MyMusicCommand> Thread2;
-		public static List<MyMusicCommand> Thread3;
-		public static List<MyMusicCommand> Thread4;
+		public static ICollection<MyMusicCommand> Thread1;
+		public static ICollection<MyMusicCommand> Thread2;
+		public static ICollection<MyMusicCommand> Thread3;
+		public static ICollection<MyMusicCommand> Thread4;
 
 		static VirtualMachine()
 		{
@@ -42,8 +43,10 @@ namespace Diplomka.Runtime
 			Variables = new Dictionary<string, int>();
 			Subroutines = new Dictionary<string, Analyzators.Subroutine>();
 			//Threads = new Dictionary<string, List<MyMusicCommand>>();
-			Thread1 = new List<MyMusicCommand>();
-			Thread2 = new List<MyMusicCommand>();
+			Thread1 = new LinkedList<MyMusicCommand>();
+			Thread2 = new LinkedList<MyMusicCommand>();
+			Thread3 = new LinkedList<MyMusicCommand>();
+			Thread4 = new LinkedList<MyMusicCommand>();
 			top = MemoryAllocSize;
 			track = new Track();
 			sequence = new Sequence();
@@ -57,14 +60,13 @@ namespace Diplomka.Runtime
 			terminated = false;
 			Channel = 0;
 			Variables.Clear();
-			Variables.Clear();
 			Subroutines.Clear();
 
-			//Thread1.Clear();
-			//Thread2.Clear();
-			//Thread3.Clear();
-			//Thread4.Clear();
-		}
+			Thread1.Clear();
+			Thread2.Clear();
+			Thread3.Clear();
+			Thread4.Clear();
+        }
 
 		public static void Poke(int code)
 		{
@@ -245,7 +247,7 @@ namespace Diplomka.Runtime
 
 				case (int)Instruction.Thrd:
 					pc++;
-					Channel++;// = mem[pc];
+					Channel++;
 					break;
 
 				default:
@@ -254,101 +256,119 @@ namespace Diplomka.Runtime
 			}
 		}
 
-        public static async Task Start()
+        public static void Start()
         {
 			while (!terminated)
-            {
-                Execute();
-            }
-
-        }
-
-		public async static void SetInstrument(int instrumentCode)
-        {
-			
-			//MyMusicCommand command = new MyMusicCommand(message, 0);
-			//StoreCommand(command);
-			await Task.Run(() => 
 			{
-				ChannelMessage message = new ChannelMessage(ChannelCommand.ProgramChange, Channel, instrumentCode, 0);
-				outDevice.Send(message);
-				System.Threading.Thread.Sleep(0);
-			});
-			//Threads[ChannelName].Add(command);
-			//outDevice.Send(message);			
-			//midiPos++;
+				Execute();
+			}
 		}
 
-		public async static void SetTone(int tone, int duration, int volume)
-		{
-			//MyMusicCommand command = new MyMusicCommand(message, duration);
-
-			//Threads[ChannelName].Add(command);
-			//StoreCommand(command);
-			ChannelMessage message = new ChannelMessage(ChannelCommand.NoteOn, Channel, tone, volume);
-			await Task.Run(() => 
-			{
-				outDevice.Send(message);
-				System.Threading.Thread.Sleep(duration);
-			});
-			message = new ChannelMessage(ChannelCommand.NoteOff, message.MidiChannel, tone, 0);
-			await Task.Run(() => 
-			{	
-				outDevice.Send(message);
-				System.Threading.Thread.Sleep(duration);
-			});
-        }
-
-		public static async Task SetVolume(int volume)
+		public static void SetInstrument(int instrumentCode)
         {
-			//MyMusicCommand command = new MyMusicCommand(message, 0);
-			await Task.Run(() => 
-			{
-				ChannelMessage message = new ChannelMessage(ChannelCommand.Controller, Channel, (int)ControllerType.Volume, volume);
-				outDevice.Send(message);
-				System.Threading.Thread.Sleep(0);
-			});
-			//StoreCommand(command);
+			ChannelMessage message = new ChannelMessage(ChannelCommand.ProgramChange, Channel, instrumentCode, 0);
+			MyMusicCommand command = new MyMusicCommand(message, 0);
+			StoreCommand(command);
+			//outDevice.Send(message);
+			//System.Threading.Thread.Sleep(0);
+		}
+
+		public static async Task PlayTone(int tone, int duration, int volume, int channel)
+        {
+			await Task.Run(() => StartTone(tone, duration, volume, channel));
+			await Task.Run(() => EndTone(tone, duration, volume, channel));
         }
 
-		public static async Task Play() 
+		public static void StartTone(int tone, int duration, int volume, int channel)
 		{
-			Task thread1 = Task.Run(() => 
+			ChannelMessage message = new ChannelMessage(ChannelCommand.NoteOn, channel, tone, volume);
+			outDevice.Send(message);
+			System.Threading.Thread.Sleep(duration);
+		}
+
+		public static void EndTone(int tone, int duration, int volume, int channel)
+        {
+			ChannelMessage message = new ChannelMessage(ChannelCommand.NoteOff, channel, tone, volume);
+			outDevice.Send(message);
+			System.Threading.Thread.Sleep(duration);
+		}
+
+		public static void SetTone(int tone, int duration, int volume)
+        {
+			ChannelMessage message = new ChannelMessage(ChannelCommand.NoteOn, Channel, tone, volume);
+			MyMusicCommand command = new MyMusicCommand(message, duration);
+			StoreCommand(command);
+			message = new ChannelMessage(ChannelCommand.NoteOff, message.MidiChannel, tone, 0);
+			command = new MyMusicCommand(message, duration);
+			StoreCommand(command);
+		}
+
+		public static void SetVolume(int volume)
+        {
+			ChannelMessage message = new ChannelMessage(ChannelCommand.Controller, Channel, (int)ControllerType.Volume, volume);
+			MyMusicCommand command = new MyMusicCommand(message, 0);
+			StoreCommand(command);
+        }
+
+		public static async Task Play(CancellationToken token)
+		{
+            token.Register(() => MainWindow.CancelToken.Cancel());
+
+			var thread1 = Task.Run(async () => 
 			{
                 foreach (MyMusicCommand cmd in Thread1)
                 {
+					if (token.IsCancellationRequested)
+					{
+						outDevice.Send(new ChannelMessage(ChannelCommand.NoteOff, 1, 0));
+						return;
+					}
 					outDevice.Send(cmd.command);
-					System.Threading.Thread.Sleep(cmd.duration);
+					await Task.Delay(cmd.duration);
                 }
 			});
 
-			Task thread2 = Task.Run(() =>
+			var thread2 = Task.Run(async () =>
 			{
 				foreach (MyMusicCommand cmd in Thread2)
 				{
+					if (token.IsCancellationRequested)
+					{
+						outDevice.Send(new ChannelMessage(ChannelCommand.NoteOff, 2, 0));
+						return;
+					}
 					outDevice.Send(cmd.command);
-					System.Threading.Thread.Sleep(cmd.duration);
+					await Task.Delay(cmd.duration);
 				}
 			});
 
-			Task thread3 = Task.Run(() => 
+			var thread3 = Task.Run(async () => 
 			{
                 foreach (MyMusicCommand cmd in Thread3)
                 {
+					if (token.IsCancellationRequested)
+					{
+						outDevice.Send(new ChannelMessage(ChannelCommand.NoteOff, 3, 0));
+						return;
+					}
 					outDevice.Send(cmd.command);
-					System.Threading.Thread.Sleep(cmd.duration);
+					await Task.Delay(cmd.duration);
 				}
 			});
 
-			Task thread4 = Task.Run(() =>
+			var thread4 = Task.Run(async () =>
 			{
 				foreach (MyMusicCommand cmd in Thread3)
 				{
+					if (token.IsCancellationRequested)
+                    {
+						outDevice.Send(new ChannelMessage(ChannelCommand.NoteOff, 4, 0));
+						return;
+					}             
 					outDevice.Send(cmd.command);
-					System.Threading.Thread.Sleep(cmd.duration);
+					await Task.Delay(cmd.duration);
 				}
 			});
-
 			await Task.WhenAll(new [] { thread1, thread2, thread3, thread4 });
 		}
 		
@@ -376,6 +396,11 @@ namespace Diplomka.Runtime
 			}
 			Variables.Clear();
 			Subroutines.Clear();
+
+			Thread1.Clear();
+			Thread2.Clear();
+			Thread3.Clear();
+			Thread4.Clear();
         }
 
 		private static void StoreCommand(MyMusicCommand command)
@@ -398,5 +423,4 @@ namespace Diplomka.Runtime
 		}
 		
 	}
-
 }

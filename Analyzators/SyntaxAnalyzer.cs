@@ -252,7 +252,7 @@
 	{
 		public Equals(Syntax left, Syntax right) : base(left, right)
 		{
-
+			;
 		}
 
 		public override void Generate()
@@ -482,6 +482,13 @@
 
     public class ThreadCommand : Syntax
     {
+		private Block _block;
+
+        public ThreadCommand(Block block) : base()
+        {
+			_block = block;
+        }
+
         public override void Generate()
         {
 			if (VirtualMachine.Channel > VirtualMachine.MAX_THREAD_THRESHOLD)
@@ -489,6 +496,7 @@
 				throw new Exceptions.ThreadExceededException("Maximálny počet vlákien je 4");
             }
 			VirtualMachine.Poke((int)Instruction.Thrd);
+			_block.Generate();
         }
     }
 
