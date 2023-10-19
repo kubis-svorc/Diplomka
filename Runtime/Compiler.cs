@@ -243,12 +243,14 @@
 				{
 					Scan();
 					keyword = analyzer.ToString();
-					if ("stále" == keyword || "always" == keyword || "stale" == keyword)
+					if ("kým" == keyword || "kym" == keyword)
                     {
 						Scan();
-						result.Add(new WhileTrueLoop(Parse()));
+						Syntax test = Compare();
+						result.Add(new WhileLoop(test, Parse()));
+						analyzer.Check(Kind.WORD, "koniec");
 						Scan();
-                    } 
+                    }
 					else
                     {
 						Syntax count = Compare();

@@ -46,14 +46,17 @@
                 <ColumnDefinition Width="Auto" MinWidth="0" />
             </Grid.ColumnDefinitions>
             <TextBox Text="" Margin="6,28,-673,0" VerticalAlignment="Top" Height="330" RenderTransformOrigin="0.5,0.5" Grid.ColumnSpan="2" AcceptsReturn="True" Background="Black" Foreground="LightGray"
-                      x:Name="CodeTab" Grid.Row="1" 
-                     PreviewKeyDown="CodeTab_PreviewKeyDown"
+                     x:Name="CodeTab" Grid.Row="1" 
+                     
                      PreviewKeyUp="CodeTab_PreviewKeyUp" 
                      KeyUp="CodeTab_KeyUp"/>
+            <!--PreviewKeyDown="CodeTab_PreviewKeyDown"-->
 
-            <ListView x:Name="SuggestionList" SelectionChanged="Suggestion_Selected" Margin="6,362,-673,50" 
-                      Grid.ColumnSpan="2" Background="Black" SelectionMode="Single" Foreground="White" Height="72" VerticalAlignment="Top" 
-                      Grid.Row="2" Width="800">
+            <ListView x:Name="SuggestionList" Margin="6,362,-673,50" 
+                      Grid.ColumnSpan="2" Background="Black" SelectionMode="Single" Foreground="White" 
+                      Grid.Row="2" Width="800" Height="72" VerticalAlignment="Top" 
+                      PreviewKeyDown="SuggestionList_PreviewKeyDown">
+                <!--SelectionChanged="Suggestion_Selected"-->
             </ListView>
             <TextBox Margin="6,439,-673,0" VerticalAlignment="Top" Height="72" Grid.ColumnSpan="2" AcceptsReturn="True" IsReadOnly="True" Name="ErrorTab" Background="Black" Foreground="White"
                      Grid.Row="3"/>
