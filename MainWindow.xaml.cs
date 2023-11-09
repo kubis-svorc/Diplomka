@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
@@ -6,6 +7,7 @@ using Diplomka.Runtime;
 using Microsoft.Win32;
 using Diplomka.Analyzators;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Console = System.Diagnostics.Debug;
 
 namespace Diplomka
@@ -14,7 +16,7 @@ namespace Diplomka
 	{
 		private int _startSubstr, _endSubstr, _caretPos;
 
-		public static System.Threading.CancellationTokenSource CancelToken;
+		private CancellationTokenSource _cancelTokenSource;
 
 		public MainWindow()
 		{
@@ -22,19 +24,11 @@ namespace Diplomka
 
 			CodeTab.Text = @"vlakno hlavné
 	nastroj organ
-	hraj c d:1000 h:100 
+	hraj c d:30000 h:100 
 	nastroj flauta 
-	hraj e d:1000 h:100
-koniec
-
-vlakno druhe
-	nastroj bicie
-	hraj e d:1000 h:100 
-	nastroj spev 
-	hraj g d:1000 h:100
+	hraj e d:30000 h:100
 koniec".ToLower();
-			//CodeTab.Text = "a = 5\r\nvypis a".ToLower();
-			CancelToken = new System.Threading.CancellationTokenSource();
+			 _cancelTokenSource = new CancellationTokenSource();
 		}
 
 		public static void PrintInfo(string message)
@@ -90,7 +84,7 @@ koniec".ToLower();
 			}
 		}
 
-		private async System.Threading.Tasks.Task StartExec(System.Threading.CancellationToken cancellationToken)
+		private async System.Threading.Tasks.Task StartExec(CancellationToken cancellationToken)
 		{
 			VirtualMachine.Reset();
 			CodeTab.IsReadOnly = true;
@@ -98,6 +92,7 @@ koniec".ToLower();
 			if (null == tree)
 			{
 				Console.WriteLine("tree is null");
+				CodeTab.IsReadOnly = false;
 				return;
 			}
 			// execution
@@ -106,17 +101,7 @@ koniec".ToLower();
 			tree.Generate();
 			Console.WriteLine("program started");
 			VirtualMachine.Start();
-			Console.WriteLine("program playing");
 			CodeTab.IsReadOnly = false;
-			try
-			{
-				await VirtualMachine.Play(CancelToken.Token);
-			}
-			catch (System.Threading.Tasks.TaskCanceledException ex)
-			{
-				Console.WriteLine(ex.Message);
-			}
-			Console.WriteLine("playing finished");
 		}
 
 		private void CodeTab_KeyUp(object sender, KeyEventArgs e)
@@ -164,25 +149,17 @@ koniec".ToLower();
 				case Key.F5:
 					if (e.KeyboardDevice.IsKeyDown(Key.LeftShift) || e.KeyboardDevice.IsKeyDown(Key.RightShift))
 					{
-						if (!CancelToken.Token.IsCancellationRequested)
-						{
-							CancelToken.Cancel();
-						}
+						_cancelTokenSource.Cancel();
 					}
 					else
 					{
-						if (!CancelToken.Token.IsCancellationRequested)
-						{
-							CancelToken.Cancel();
-						}
-
-						CancelToken = new System.Threading.CancellationTokenSource();
-
 						try
 						{
-							await StartExec(CancelToken.Token);
+							_cancelTokenSource = new CancellationTokenSource();
+							await StartExec(_cancelTokenSource.Token);
+							await VirtualMachine.Play(_cancelTokenSource.Token);
 						}
-						catch (System.Threading.Tasks.TaskCanceledException ex)
+						catch (Exception ex)//(System.Threading.Tasks.TaskCanceledException ex)
 						{
 							CodeTab.IsReadOnly = false;
 							Console.WriteLine(ex.Message);
@@ -193,25 +170,36 @@ koniec".ToLower();
 				case Key.H:
 					if (e.KeyboardDevice.IsKeyDown(Key.LeftCtrl) || e.KeyboardDevice.IsKeyDown(Key.RightCtrl))
                     {
-						// preskoc na novu uroven
+						CodeTab.CaretIndex = FindNextHeading(CodeTab.Text, CodeTab.CaretIndex);
                     }
 					break;
 
 				default:
 					break;
             }
-
-            if (Key.F5 == e.Key)
-			{
-				// is shift pressed?
-				
-				
-			}
-		
-		
 		}
 
-        private void SuggestionList_PreviewKeyDown(object sender, KeyEventArgs e)
+        private int FindNextHeading(string text, int caret)
+        {
+			MatchCollection matches = Wrappers.KeywordContainer.RegexObj.Matches(text);
+
+            foreach (Match match in matches)
+            {
+				if (match.Index > caret)
+                {
+					return match.Index;
+                }
+            }
+
+			if (matches.Count > 0)
+            {
+				return matches[0].Index;
+            }
+
+			return 0;
+        }
+		
+		private void SuggestionList_PreviewKeyDown(object sender, KeyEventArgs e)
         {
 			if (Key.Enter == e.Key)
             {

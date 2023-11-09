@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace Diplomka.Wrappers
 {
@@ -6,6 +8,9 @@ namespace Diplomka.Wrappers
     {
         public static readonly ICollection<string> Keywords;
         public static readonly ICollection<string> Headers;
+        public static readonly string HeaderPattern;
+        public static readonly Regex RegexObj;
+
 
         static KeywordContainer()
         {
@@ -16,8 +21,12 @@ namespace Diplomka.Wrappers
 
             Headers = new HashSet<string> 
             { 
-                "", "", "", "", ""
+                "opakuj", "ak", "inak", "urob", "vlakno"
             };
+
+            HeaderPattern = string.Join("|", Headers.Select(Regex.Escape));
+            RegexObj = new Regex($@"\b({HeaderPattern})");
+
         }
     }
 }

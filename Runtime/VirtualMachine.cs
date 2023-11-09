@@ -273,26 +273,6 @@ namespace Diplomka.Runtime
 			//System.Threading.Thread.Sleep(0);
 		}
 
-		public static async Task PlayTone(int tone, int duration, int volume, int channel)
-        {
-			await Task.Run(() => StartTone(tone, duration, volume, channel));
-			await Task.Run(() => EndTone(tone, duration, volume, channel));
-        }
-
-		public static void StartTone(int tone, int duration, int volume, int channel)
-		{
-			ChannelMessage message = new ChannelMessage(ChannelCommand.NoteOn, channel, tone, volume);
-			outDevice.Send(message);
-			System.Threading.Thread.Sleep(duration);
-		}
-
-		public static void EndTone(int tone, int duration, int volume, int channel)
-        {
-			ChannelMessage message = new ChannelMessage(ChannelCommand.NoteOff, channel, tone, volume);
-			outDevice.Send(message);
-			System.Threading.Thread.Sleep(duration);
-		}
-
 		public static void SetTone(int tone, int duration, int volume)
         {
 			ChannelMessage message = new ChannelMessage(ChannelCommand.NoteOn, Channel, tone, volume);
@@ -310,66 +290,109 @@ namespace Diplomka.Runtime
 			StoreCommand(command);
         }
 
-		public static async Task Play(CancellationToken token)
+		public static async Task Play(CancellationToken cancellationToken)
 		{
-            token.Register(() => MainWindow.CancelToken.Cancel());
-
 			var thread1 = Task.Run(async () => 
 			{
                 foreach (MyMusicCommand cmd in Thread1)
                 {
-					if (token.IsCancellationRequested)
-					{
-						outDevice.Send(new ChannelMessage(ChannelCommand.NoteOff, 1, 0));
-						return;
+					if (cancellationToken.IsCancellationRequested)
+                    {
+						cmd.command = new ChannelMessage(ChannelCommand.NoteOff, cmd.command.MidiChannel, cmd.command.Data1, cmd.command.Data2);
+						outDevice.Send(cmd.command);
+						break;
 					}
+					int delayTime = 0, delayInterval = 200, remainingDelay = cmd.duration;
 					outDevice.Send(cmd.command);
-					await Task.Delay(cmd.duration);
+					while (remainingDelay > 0)
+                    {
+						delayTime = Math.Min(remainingDelay, delayInterval);
+						await Task.Delay(delayTime);
+						remainingDelay -= delayTime;
+						if (cancellationToken.IsCancellationRequested)
+						{
+							remainingDelay = -1;
+						}
+					}
                 }
 			});
 
-			var thread2 = Task.Run(async () =>
-			{
-				foreach (MyMusicCommand cmd in Thread2)
-				{
-					if (token.IsCancellationRequested)
-					{
-						outDevice.Send(new ChannelMessage(ChannelCommand.NoteOff, 2, 0));
-						return;
-					}
-					outDevice.Send(cmd.command);
-					await Task.Delay(cmd.duration);
-				}
-			});
-
-			var thread3 = Task.Run(async () => 
-			{
-                foreach (MyMusicCommand cmd in Thread3)
+            var thread2 = Task.Run(async () =>
+            {
+                foreach (MyMusicCommand cmd in Thread2)
                 {
-					if (token.IsCancellationRequested)
+					if (cancellationToken.IsCancellationRequested)
 					{
-						outDevice.Send(new ChannelMessage(ChannelCommand.NoteOff, 3, 0));
-						return;
+						cmd.command = new ChannelMessage(ChannelCommand.NoteOff, cmd.command.MidiChannel, cmd.command.Data1, cmd.command.Data2);
+						outDevice.Send(cmd.command);
+						break;
 					}
+					int delayTime = 0, delayInterval = 200, remainingDelay = cmd.duration;
 					outDevice.Send(cmd.command);
-					await Task.Delay(cmd.duration);
+					while (remainingDelay > 0)
+					{
+						delayTime = Math.Min(remainingDelay, delayInterval);
+						await Task.Delay(delayTime);
+						remainingDelay -= delayTime;
+						if (cancellationToken.IsCancellationRequested)
+						{
+							remainingDelay = -1;
+						}
+					}
 				}
-			});
+            });
 
-			var thread4 = Task.Run(async () =>
-			{
+            var thread3 = Task.Run(async () =>
+            {
 				foreach (MyMusicCommand cmd in Thread3)
 				{
-					if (token.IsCancellationRequested)
-                    {
-						outDevice.Send(new ChannelMessage(ChannelCommand.NoteOff, 4, 0));
-						return;
-					}             
+					if (cancellationToken.IsCancellationRequested)
+					{
+						cmd.command = new ChannelMessage(ChannelCommand.NoteOff, cmd.command.MidiChannel, cmd.command.Data1, cmd.command.Data2);
+						outDevice.Send(cmd.command);
+						break;
+					}
+					int delayTime = 0, delayInterval = 200, remainingDelay = cmd.duration;
 					outDevice.Send(cmd.command);
-					await Task.Delay(cmd.duration);
+					while (remainingDelay > 0)
+					{
+						delayTime = Math.Min(remainingDelay, delayInterval);
+						await Task.Delay(delayTime);
+						remainingDelay -= delayTime;
+						if (cancellationToken.IsCancellationRequested)
+						{
+							remainingDelay = -1;
+						}
+					}
 				}
 			});
-			await Task.WhenAll(new [] { thread1, thread2, thread3, thread4 });
+
+            var thread4 = Task.Run(async () =>
+            {
+				foreach (MyMusicCommand cmd in Thread4)
+				{
+					if (cancellationToken.IsCancellationRequested)
+					{
+						cmd.command = new ChannelMessage(ChannelCommand.NoteOff, cmd.command.MidiChannel, cmd.command.Data1, cmd.command.Data2);
+						outDevice.Send(cmd.command);
+						break;
+					}
+					int delayTime = 0, delayInterval = 200, remainingDelay = cmd.duration;
+					outDevice.Send(cmd.command);
+					while (remainingDelay > 0)
+					{
+						delayTime = Math.Min(remainingDelay, delayInterval);
+						await Task.Delay(delayTime);
+						remainingDelay -= delayTime;
+						if (cancellationToken.IsCancellationRequested)
+						{
+							remainingDelay = -1;
+						}
+					}
+				}
+			});
+
+            await Task.WhenAll(new[] { thread1, thread2, thread3, thread4 });
 		}
 		
 		public static void SetJumpToProgramBody()
@@ -422,5 +445,20 @@ namespace Diplomka.Runtime
 			}
 		}
 		
+		public static Task StopAndCancel()
+        {
+			return Task.Run(() =>
+			{
+				for (int i = 0; i < 4; i++)
+				{
+					outDevice.Send(new ChannelMessage(ChannelCommand.NoteOff, i, 0));
+				}
+			});
+        }
+
+		private void Thread1Act(CancellationToken cancellationToken) 
+		{
+			
+		}
 	}
 }
