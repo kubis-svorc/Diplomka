@@ -239,7 +239,7 @@
 					result.Add(new Analyzators.Tone(new Const(toneCode), new Const(duration), new Const(volume)));
 				}
 
-				else if ("opakuj" == keyword || "repeat" == keyword)
+				else if ("opakuj" == keyword)
 				{
 					Scan();
 					keyword = analyzer.ToString();
@@ -254,7 +254,9 @@
 					else
                     {
 						Syntax count = Compare();
-						result.Add(new ForLoop(count, Parse()));
+						analyzer.Check(Kind.WORD, "krat");
+						Scan();
+						result.Add(new ForLoop(count, Parse()));						
 						Scan();
 					}
 				}
@@ -325,10 +327,18 @@
 				
 				else if ("losuj" == keyword)
                 {
+					Scan();
 					Syntax randomConst = NumberGenerator();
 					result.Add(randomConst);
                 }
 
+				else if ("pauza" == keyword)
+                {
+					Scan();
+					Syntax expression = Compare();
+					result.Add(new Pause(expression));
+                }
+				
 				else
                 {
 					string name = analyzer.ToString();
@@ -484,7 +494,6 @@
 
 		public Syntax NumberGenerator()
         {
-			Scan();
 			analyzer.Check(Kind.SYMBOL, "(");
 			Scan();
 			analyzer.Check(Kind.NUMBER);

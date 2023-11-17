@@ -250,6 +250,13 @@ namespace Diplomka.Runtime
 					Channel++;
 					break;
 
+				case (int)Instruction.Pause:
+					pc++;
+					duration = mem[top];
+					top++;
+					SetPause(duration);
+					break;
+
 				default:
 					terminated = true;
 					break;
@@ -282,6 +289,12 @@ namespace Diplomka.Runtime
 			command = new MyMusicCommand(message, duration);
 			StoreCommand(command);
 		}
+
+		public static void SetPause(int duration)
+        {
+			MyMusicCommand myMusic = new MyMusicCommand(new ChannelMessage(ChannelCommand.NoteOff, Channel, 0), duration);
+			StoreCommand(myMusic);
+        }
 
 		public static void SetVolume(int volume)
         {

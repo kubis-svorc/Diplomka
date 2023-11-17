@@ -9,6 +9,7 @@ using Diplomka.Analyzators;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Console = System.Diagnostics.Debug;
+using System.Windows.Controls;
 
 namespace Diplomka
 {
@@ -16,19 +17,22 @@ namespace Diplomka
 	{
 		private int _startSubstr, _endSubstr, _caretPos;
 
+		private bool _isTextBoxFocused;
+
 		private CancellationTokenSource _cancelTokenSource;
 
 		public MainWindow()
 		{
-			InitializeComponent();
-
+			InitializeComponent();			
 			CodeTab.Text = @"vlakno hlavné
-	nastroj organ
-	hraj c d:30000 h:100 
-	nastroj flauta 
-	hraj e d:30000 h:100
+  opakuj 5 krat
+    hraj c d:500 h:100
+    pauza 500
+  koniec
 koniec".ToLower();
 			 _cancelTokenSource = new CancellationTokenSource();
+			_isTextBoxFocused = true;
+			CodeTab.Focus();
 		}
 
 		public static void PrintInfo(string message)
@@ -103,21 +107,19 @@ koniec".ToLower();
 			VirtualMachine.Start();
 			CodeTab.IsReadOnly = false;
 		}
-
+		
 		private void CodeTab_KeyUp(object sender, KeyEventArgs e)
 		{
-			if (Key.F1 == e.Key)
+			if (!_isTextBoxFocused) 
 			{
-				_caretPos = CodeTab.CaretIndex;
-				SuggestionList.Focus();
 				return;
 			}
 
 			int from, until;
 
-			for (from = CodeTab.CaretIndex - 1; 0 < from && from < CodeTab.Text.Length && !char.IsWhiteSpace(CodeTab.Text[from]); from--) ;            
+			for (from = CodeTab.CaretIndex - 1; 0 < from && from < CodeTab.Text.Length && char.IsLetterOrDigit(CodeTab.Text[from]); from--) ;            
 
-			for (until = CodeTab.CaretIndex + 1; 0 < until && until < CodeTab.Text.Length && !char.IsWhiteSpace(CodeTab.Text[until]); until++) ;			
+			for (until = CodeTab.CaretIndex + 1; 0 < until && until < CodeTab.Text.Length && char.IsLetterOrDigit(CodeTab.Text[until]); until++) ;			
 
 			if (from < 0)
 			{
@@ -134,7 +136,7 @@ koniec".ToLower();
 			string[] suggestions = Wrappers
 				.KeywordContainer
 				.Keywords
-				.Where(kw => System.Text.RegularExpressions.Regex.IsMatch(kw, wordUnderCaret))
+				.Where(kw => Regex.IsMatch(kw, wordUnderCaret))
 				.ToArray();
 			SuggestionList.ItemsSource = suggestions;
 			
@@ -146,24 +148,38 @@ koniec".ToLower();
 		{
             switch (e.Key)
             {
+				case Key.F1:
+					if (!CodeTab.IsFocused)
+					{
+						return;
+					}
+					_isTextBoxFocused = false;
+					if (!SuggestionList.HasItems)
+					{
+						SuggestionList.Focus();
+						return;
+					}
+					SuggestionList.SelectedIndex = 0;
+					ListViewItem item = SuggestionList.ItemContainerGenerator.ContainerFromIndex(0) as ListViewItem;
+					item.Focus();
+					break;
+
 				case Key.F5:
 					if (e.KeyboardDevice.IsKeyDown(Key.LeftShift) || e.KeyboardDevice.IsKeyDown(Key.RightShift))
 					{
 						_cancelTokenSource.Cancel();
+						return;
 					}
-					else
+					try
 					{
-						try
-						{
-							_cancelTokenSource = new CancellationTokenSource();
-							await StartExec(_cancelTokenSource.Token);
-							await VirtualMachine.Play(_cancelTokenSource.Token);
-						}
-						catch (Exception ex)//(System.Threading.Tasks.TaskCanceledException ex)
-						{
-							CodeTab.IsReadOnly = false;
-							Console.WriteLine(ex.Message);
-						}
+						_cancelTokenSource = new CancellationTokenSource();
+						await StartExec(_cancelTokenSource.Token);
+						await VirtualMachine.Play(_cancelTokenSource.Token);
+					}
+					catch (Exception ex)
+					{
+						CodeTab.IsReadOnly = false;
+						Console.WriteLine(ex.Message);
 					}
 					break;
 				
@@ -198,20 +214,30 @@ koniec".ToLower();
 
 			return 0;
         }
-		
+
 		private void SuggestionList_PreviewKeyDown(object sender, KeyEventArgs e)
-        {
+		{
 			if (Key.Enter == e.Key)
-            {
+			{
 				string selectedValue = SuggestionList.SelectedItem.ToString();
 				Console.WriteLine(selectedValue);
 				string prefix = CodeTab.Text.Substring(0, _startSubstr);
 				string postFix = CodeTab.Text.Substring(_endSubstr);
 				CodeTab.Text = string.Concat(prefix, selectedValue, postFix);
-				_caretPos = (prefix.Length + selectedValue.Length);
-				CodeTab.CaretIndex = _caretPos;
-				CodeTab.Focus();
+				_caretPos = prefix.Length + selectedValue.Length;
+				goto FocusCodeTab;
 			}
+			else if (Key.F1 == e.Key) 
+			{
+				goto FocusCodeTab;
+			}
+			return;
+			
+			FocusCodeTab:
+			_isTextBoxFocused = true;
+			CodeTab.Focus();
+			CodeTab.CaretIndex = _caretPos;
+			return;	
         }
     }
 }
