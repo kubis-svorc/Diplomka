@@ -59,15 +59,28 @@ koniec".ToLower();
 
 		private void OnSave(object sender, ExecutedRoutedEventArgs e)
 		{
-
-			SaveFileDialog dialog = new SaveFileDialog();
-			dialog.InitialDirectory = "C:\\";
-			dialog.Filter = "MIDI files (*.mid)|*.mid|All files (*.*)|*.*";
-
+			var dialog = new SaveFileDialog 
+			{
+				InitialDirectory = "C:\\",
+				//FileName = "MIDI files (*.mid)|*.mid|All files (*.*)|*.*",
+				Title = "Uložiť program"
+			};
 			if (dialog.ShowDialog().Value)
 			{
-				string path = dialog.FileName;
-				VirtualMachine.sequence.Save(path);
+				string textPath = string.Concat(dialog.FileName, ".txt");
+				string midiPath = string.Concat(dialog.FileName, ".midi");
+
+				try 
+				{
+					VirtualMachine.SaveMIDI(midiPath);
+					System.IO.File.WriteAllText(textPath, CodeTab.Text, System.Text.Encoding.UTF8);
+				}
+				catch (Exception ex) 
+				{
+					Console.WriteLine(ex.Message);
+					ErrorTab.Text = ex.Message;
+					ErrorTab.Focus();
+				}
 			}
 		}
 

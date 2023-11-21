@@ -469,9 +469,27 @@ namespace Diplomka.Runtime
 			});
         }
 
-		private void Thread1Act(CancellationToken cancellationToken) 
+		public static void SaveMIDI(string path)
 		{
-			
-		}
+			Sequence seq = new Sequence();
+			Track track = new Track();
+
+			int ticks, timepos = 0;
+			foreach (var msg in Thread1)
+            {
+				timepos += msg.duration;
+				ticks = (int)(timepos * seq.Division / 1_000F);
+				track.Insert(ticks, msg.command);
+            }
+            try 
+			{
+				seq.Add(track);
+				seq.Save(path);
+			}
+            catch
+            {
+
+            }
+		} 
 	}
 }

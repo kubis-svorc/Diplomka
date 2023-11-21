@@ -19,7 +19,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NAudio" Version="2.1.0" />
     <PackageReference Include="Sanford.Multimedia.Midi" Version="6.6.2" />
   </ItemGroup>
 
