@@ -292,9 +292,12 @@ namespace Diplomka.Runtime
 
 		public static void SetPause(int duration)
         {
-			MyMusicCommand myMusic = new MyMusicCommand(new ChannelMessage(ChannelCommand.NoteOff, Channel, 0), duration);
+			MyMusicCommand myMusic = new MyMusicCommand(new ChannelMessage(ChannelCommand.NoteOn, Channel, 0), duration);
 			StoreCommand(myMusic);
-        }
+			
+			myMusic = new MyMusicCommand(new ChannelMessage(ChannelCommand.NoteOff, Channel, 0), duration);
+			StoreCommand(myMusic);
+		}
 
 		public static void SetVolume(int volume)
         {
@@ -478,10 +481,31 @@ namespace Diplomka.Runtime
 			foreach (var msg in Thread1)
             {
 				timepos += msg.duration;
-				ticks = (int)(timepos * seq.Division / 1_000F);
+				ticks = (int)(timepos * seq.Division / 500F);
 				track.Insert(ticks, msg.command);
             }
-            try 
+			timepos = 0;
+			foreach (var msg in Thread2)
+			{
+				timepos += msg.duration;
+				ticks = (int)(timepos * seq.Division / 500F);
+				track.Insert(ticks, msg.command);
+			}
+			timepos = 0;
+			foreach (var msg in Thread3)
+			{
+				timepos += msg.duration;
+				ticks = (int)(timepos * seq.Division / 500F);
+				track.Insert(ticks, msg.command);
+			}
+			timepos = 0;
+			foreach (var msg in Thread4)
+			{
+				timepos += msg.duration;
+				ticks = (int)(timepos * seq.Division / 500F);
+				track.Insert(ticks, msg.command);
+			}
+			try 
 			{
 				seq.Add(track);
 				seq.Save(path);

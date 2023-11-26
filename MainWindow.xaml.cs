@@ -25,10 +25,12 @@ namespace Diplomka
 		{
 			InitializeComponent();			
 			CodeTab.Text = @"vlakno hlavné
-  opakuj 5 krat
-    hraj c d:500 h:100
-    pauza 500
-  koniec
+  hraj c d:1000 h:100
+koniec
+
+vlakno druhe
+  nastroj hlas 
+  hraj e d:1000 h:100 
 koniec".ToLower();
 			 _cancelTokenSource = new CancellationTokenSource();
 			_isTextBoxFocused = true;
