@@ -21,6 +21,8 @@ namespace Diplomka
 
 		private CancellationTokenSource _cancelTokenSource;
 
+		private static string CurrentFilePath = null;
+
 		public MainWindow()
 		{
 			InitializeComponent();			
@@ -59,19 +61,82 @@ koniec".ToLower();
 			Application.Current.Shutdown(0);
 		}
 
-		private void OnSave(object sender, ExecutedRoutedEventArgs e)
-		{
-			var dialog = new SaveFileDialog 
+		private void OnNovyClick(object sender, RoutedEventArgs e)
+        {
+			CodeTab.Clear();
+			ErrorTab.Clear();
+			SuggestionList.ItemsSource = null; //Enumerable.Empty<ItemsControl>();
+			CurrentFilePath = string.Empty;
+        }
+
+		private void OnOpenFile(object sender, RoutedEventArgs e)
+        {
+			var dialog = new OpenFileDialog 
 			{
 				InitialDirectory = "C:\\",
-				//FileName = "MIDI files (*.mid)|*.mid|All files (*.*)|*.*",
+				Filter = "Text Files|*.txt|All Files|*.*",
+				Title = "Otvoriť program"
+			};
+
+			if (dialog.ShowDialog().Value)
+            {
+				string textPath = dialog.FileName;
+				CurrentFilePath = System.IO.Path.GetDirectoryName(textPath);
+				try 
+				{
+					CodeTab.Text = System.IO.File.ReadAllText(textPath);
+				}
+                catch (System.IO.IOException ex)
+                {
+					ErrorTab.AppendText($"Nebolo možné otvoriť súbor: {ex.Message}");
+                }
+			}
+        }
+
+		private void OnSaveAs(object sender, RoutedEventArgs e)
+        {
+			var dialog = new SaveFileDialog
+			{
+				InitialDirectory = "C:\\",
+				Title = "Uložiť program ako"
+			};
+			if (dialog.ShowDialog().Value)
+			{
+				string textPath = string.Concat(dialog.FileName, ".txt");
+				string midiPath = string.Concat(dialog.FileName, ".midi");
+				CurrentFilePath = System.IO.Path.GetDirectoryName(dialog.FileName);
+				try
+				{
+					VirtualMachine.SaveMIDI(midiPath);
+					System.IO.File.WriteAllText(textPath, CodeTab.Text, System.Text.Encoding.UTF8);
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine(ex.Message);
+					ErrorTab.Text = ex.Message;
+					ErrorTab.Focus();
+				}
+			}
+		}
+
+		private void OnSave(object sender, RoutedEventArgs e)
+		{
+			if (string.IsNullOrWhiteSpace(CurrentFilePath))
+            {
+				OnSaveAs(sender, e);
+				return;
+            }
+			 
+			var dialog = new SaveFileDialog 
+			{
+				InitialDirectory = CurrentFilePath,
 				Title = "Uložiť program"
 			};
 			if (dialog.ShowDialog().Value)
 			{
 				string textPath = string.Concat(dialog.FileName, ".txt");
 				string midiPath = string.Concat(dialog.FileName, ".midi");
-
+				
 				try 
 				{
 					VirtualMachine.SaveMIDI(midiPath);

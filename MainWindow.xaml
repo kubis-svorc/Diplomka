@@ -4,36 +4,36 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Diplomka"
+        Title="Nieco sick"
         x:Name="MyWindow" Width="826" Height="554">
 
     <Window.CommandBindings>
-        <CommandBinding Command="Save" Executed="OnSave"/>        
+        <CommandBinding Command="Open"  Executed="OnOpenFile"/>
+        <CommandBinding Command="New"  Executed="OnNovyClick"/>
+        <CommandBinding Command="Save" Executed="OnSave"/>
+        <CommandBinding Command="SaveAs" Executed="OnSaveAs"/>
+        <CommandBinding Command="Close" Executed="OnExitClick"/>
     </Window.CommandBindings>
     <Window.InputBindings>
-        <KeyBinding Key="S" Modifiers="Ctrl" Command="Save"/>        
+        <KeyBinding Key="S" Modifiers="Ctrl" Command="Save"/>
+        <KeyBinding Key="S" Modifiers="Shift+Ctrl" Command="SaveAs"/>
+        <KeyBinding Key="O" Modifiers="Ctrl" Command="Open"/>
+        <KeyBinding Key="N" Modifiers="Ctrl" Command="New"/>
+        <KeyBinding Key="F4" Modifiers="Alt" Command="Close"/>
     </Window.InputBindings>
 
     <Grid Margin="0,0,0,0">
         <!-- Navigation menu bar -->
         <Menu Margin="0,0,0,24" x:Name="MyMenu">
-            <MenuItem Header="_File">
-                <MenuItem Header="_New"/>
-                <MenuItem Header="_Open"/>
-                <Separator/>
-                <MenuItem Header="_Save">                    
-                </MenuItem>
-                <MenuItem Header="Save _As"/>
-                <Separator/>
-                <MenuItem Header="E_xit" Click="OnExitClick"/>
+            <MenuItem Header="_Súbor">
+                <MenuItem Header="_Nový" Click="OnNovyClick" InputGestureText="Ctrl + N"/>
+                <MenuItem Header="_Otvor" Click="OnOpenFile" InputGestureText="Ctrl + O"/>
+                <MenuItem Header="_Uložiť" Click="OnSave" InputGestureText="Ctrl + S"/>
+                <MenuItem Header="Uložiť _ako" Click="OnSaveAs" InputGestureText="Ctrl + Shift + S"/>
+                <MenuItem Header="Ukončiť" Click="OnExitClick" InputGestureText="Alt + F4"/>
             </MenuItem>
-            <MenuItem Header="_Edit">
-                <MenuItem Header="_Cut"/>
-                <MenuItem Header="_Copy"/>
-                <MenuItem Header="_Paste"/>
-            </MenuItem>
-            <MenuItem Header="_Help">
-                <MenuItem Header="_About"/>
+            <MenuItem Header="_Pomoc">
+                <MenuItem Header="O P_rograme"/>
             </MenuItem>
         </Menu>
 
