@@ -347,7 +347,7 @@
                     {
 						if (!VirtualMachine.Subroutines.ContainsKey(name))
 						{
-							throw new System.Collections.Generic.KeyNotFoundException($"{name} is not defined");
+							throw new System.Collections.Generic.KeyNotFoundException($"Nepoznám {name}");
 						}
 						result.Add(new Call(name));
 					}
@@ -356,7 +356,7 @@
                     {
 						if (VirtualMachine.Subroutines.ContainsKey(name))
 						{
-							throw new Exceptions.NameException($"Function {name} is already defined");
+							throw new Exceptions.NameException($"Podprogram {name} je už raz zadefinovaný");
 						}
 						
 						Scan();
@@ -396,7 +396,7 @@
                 }
 				else if (!VirtualMachine.Variables.ContainsKey(name))
                 {
-					throw new System.Collections.Generic.KeyNotFoundException($"{name} nie je zadeklarovane");
+					throw new System.Collections.Generic.KeyNotFoundException($"Nepoznám premennú {name}");
                 }
 				else
                 {
