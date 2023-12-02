@@ -186,7 +186,7 @@
 			while (Kind.WORD == analyzer.kind)
 			{
 				keyword = analyzer.ToString();
-				if ("nastroj" == keyword)
+				if ("nastroj" == keyword || "nástroj" == keyword)
 				{
 					Scan();
 					int instrumentCode = GetInstrumentCode(analyzer.ToString());
@@ -254,14 +254,14 @@
 					else
                     {
 						Syntax count = Compare();
-						analyzer.Check(Kind.WORD, "krat");
+						analyzer.Check(Kind.WORD, new string[] { "krat", "krát" });
 						Scan();
 						result.Add(new ForLoop(count, Parse()));						
 						Scan();
 					}
 				}
 	
-				else if ("ak" == keyword || "if" == keyword)
+				else if ("ak" == keyword || "keď" == keyword || "ked" == keyword)
                 {
 					Syntax test = null, bodyT = null, bodyF = null;
 					Scan();
@@ -271,7 +271,7 @@
 					analyzer.Check(Kind.WORD, "koniec");
 					Scan();
 					keyword = analyzer.ToString();
-					if ("inak" == keyword || "else" == keyword) 
+					if ("inak" == keyword) 
 					{
 						Scan();
 						bodyF = Parse();
@@ -281,7 +281,7 @@
 					result.Add(new IfElse(test, bodyT, bodyF));
                 }
 
-				else if ("def" == keyword || "fun" == keyword || "sub" == keyword || "function" == keyword || "urob" == keyword)
+				else if ("def" == keyword || "fun" == keyword || "funkcia" == keyword || "urob" == keyword)
                 {
 					Scan();
 					analyzer.Check(Kind.WORD);
@@ -301,18 +301,18 @@
 					result.Add(sub);
                 }
 
-				else if ("koniec" == keyword || "end" == keyword)
+				else if ("koniec" == keyword)
                 {
 					return result;
                 }
 
-				else if ("vypis" == keyword || "print" == keyword)
+				else if ("vypis" == keyword || "výpis" == keyword)
                 {
 					Scan();
 					result.Add(new Print(Compare()));
                 }			
 
-				else if ("vlakno" == keyword)
+				else if ("vlakno" == keyword || "vlákno" == keyword)
 				{
 					// todo: vlakno == midi kanal                
 					Scan();

@@ -155,9 +155,10 @@
 						message = $"Chyba na pozicií {position} : Očakával som symbol, dostal som {kindStr}";
 						break;
 				}
+				throw new SyntaxException(message);
 			}
 
-			if (expectedToken != null && expectedToken != ToString())
+			if (!string.IsNullOrWhiteSpace(expectedToken) && expectedToken != ToString())
 			{
 				int row = input.Substring(0, position).Count(s => s == '\r');
 				string actualToken = ToString();
@@ -168,5 +169,61 @@
 				throw new SyntaxException($"Chyba v riadku {row}: Očakával som {expectedToken}, dostal som {actualToken}");
 			}
 		}		
+	
+		public void Check(Kind expected, string[] expectedTokens) 
+		{
+			string kindStr;
+			switch (kind)
+			{
+				case Kind.NOTHING:
+					kindStr = "koniec programu";
+					break;
+				case Kind.NUMBER:
+					kindStr = "číslo";
+					break;
+				case Kind.WORD:
+					kindStr = "slovo";
+					break;
+				case Kind.SYMBOL:
+				default:
+					kindStr = "symbol";
+					break;
+			}
+
+
+			if (kind != expected)
+			{
+				string message;
+				switch (expected)
+				{
+					case Kind.NUMBER:
+						message = $"Chyba na pozicií {position} : Očakával som číslo, dostal som {kindStr}";
+						break;
+					case Kind.WORD:
+						message = $"Chyba na pozicií {position} : Očakával som slovo, dostal som {kindStr}";
+						break;
+					case Kind.NOTHING:
+						message = $"Chyba na pozicií {position} : Očákával som koniec programu, dostal som {kindStr}";
+						break;
+					case Kind.SYMBOL:
+					default:
+						message = $"Chyba na pozicií {position} : Očakával som symbol, dostal som {kindStr}";
+						break;
+				}
+				throw new SyntaxException(message);
+			}
+
+			if (!expectedTokens.Contains<string>(ToString()))
+            {
+				int row = input.Substring(0, position).Count(s => s == '\r');
+				string actualToken = ToString();
+				if (string.IsNullOrEmpty(actualToken))
+				{
+					actualToken = "nič";
+				}
+				string message = $"Chyba v riadku {row}: Očakával som {string.Join(",", expectedTokens)}, dostal som {actualToken}";
+				throw new SyntaxException(message);
+            }
+		}
 	}
 }
