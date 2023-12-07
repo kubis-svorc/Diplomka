@@ -167,5 +167,101 @@ výrazy sa dajú vyhodnocovať, nadväzujú však na problém s premennými.
 
 **07.08.2023 - 13.08.2023**
 
-* Implementacia primitivnych podprogramov (bez parametrov, bez navratovych hodnot), bugfix niektorych implementacii funkcie Generate()
-* 
+* Implementacia primitivnych podprogramov (bez parametrov, bez navratovych hodnot), bugfix niektorych implementacii funkcie Generate())
+
+
+**14.08.2023 - 20.08.2023
+
+* Implementacia vetvenia (if else), aj s premennými
+
+* Bugfix
+
+
+**21.08.2023 - 27.08.2023
+
+* Implementácia vlákien na paralelné prehrávanie (nefunguje zatiaľ správne)
+
+
+**28.08.2023 - 03.09.2023
+
+* Iný prípstup k implementácia vlákien a paralelnéhp prehrávanie (tiež nefunguje)
+
+
+**04.09.2023 - 10.09.2023
+
+* Zmena logiky prehrávania zvukov -> vlákna (iba hrubý náčrt, ešte treba vyskúšať viac ako 1)
+
+* Nekonecne cykly - problem (?)
+
+
+**11.09.2023 - 17.09.2023
+
+* Implementácia vlákien s novým spôsobom prehrávania (zoznamy)
+
+* Nekonecny cyklus nemusi byt - odstranene
+
+* Bugfix
+
+
+**18.09.2023 - 24.09.2023
+
+* System napoved a navigacia na neho 
+
+
+**25.09.2023 - 01.10.2023
+ 
+* Spracovanie clankov o sposobe vyvoja softveru
+
+
+**02.10.2023 - 08.10.2023
+
+* Implementacia systemu napoved (nefunguje spravne)
+
+**09.10.2023 - 15.10.2023
+
+* Oprava systemu napoved (pokracovanie) a niektorych dodatocnych skratiek
+
+
+**16.10.2023 - 22.10.2023
+
+* Zavedenie klavesovych skratiek a premapovanie standardnych windowsovych skratiek do aplikacie
+
+
+**23.10.2023 - 29.10.2023
+
+* Implementacia navigacie po kode (CTRL + H)
+
+
+**30.10.2023 - 05.11.2023
+
+* Zavedenie async metod na udrzovanie okna reaktivnom stave
+
+* todo: odstranit bug - pocas prepisovanie textu spadne program
+
+
+**06.10.2023 - 12.11.2023
+
+* Zavedenie dalsich metod ako async, zavedenie systemu na zastavenie prehravania ked program bezi dlho alebo sa zasekne (CTRL+SHIFT+F5)
+
+* BUGFIX : niektore async metody zhadzovali aplikaciu
+
+**13.10.2023 - 19.11.2023
+
+* Implementacia saveovania programu do MIDI vystupu (nefunguje)
+
+* Prelozenie niektorych textov do slovenciny
+
+* Pisanie DP 
+
+**20.10.2023 - 26.11.2023
+
+* Implementacia savovanie programu do MIDI vystupu (iny sposob, funguje(?))
+
+* Pisanie DP
+
+**27.10.2023 - 03.12.2023
+
+* Priprava prezentacie
+
+
+
