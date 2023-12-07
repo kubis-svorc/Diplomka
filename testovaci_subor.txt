@@ -1,0 +1,32 @@
+﻿urob zahrajNotuC
+	hraj c d:250 h:50
+koniec
+
+urob zahrajNotuG
+	hraj g d:250 h:50
+koniec
+
+
+urob nastavHusle
+  nástroj husle
+koniec
+
+urob nastavKlavir
+  nástroj piano
+koniec
+
+vlákno prvé
+	nastavHusle
+    opakuj 5 krát
+		zahrajNotuC
+	koniec
+	hraj c d:550 h:50
+koniec
+
+vlákno druhé
+	nastavKlavir
+	opakuj 5 krát 
+		zahrajNotuG
+	koniec
+	hraj g d:550 h:50
+koniec
