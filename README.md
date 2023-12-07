@@ -172,7 +172,9 @@ výrazy sa dajú vyhodnocovať, nadväzujú však na problém s premennými.
 
 **14.08.2023 - 20.08.2023
 
-* Implementacia vetvenia (if else), aj s premennými
+* Implementacia vetvenia (if else), aj s premennými (nefunguje)
+
+*todo: premenne vo vetveniach
 
 * Bugfix
 
@@ -181,10 +183,14 @@ výrazy sa dajú vyhodnocovať, nadväzujú však na problém s premennými.
 
 * Implementácia vlákien na paralelné prehrávanie (nefunguje zatiaľ správne)
 
+*todo: premenne vo vetveniach
+
 
 **28.08.2023 - 03.09.2023
 
 * Iný prípstup k implementácia vlákien a paralelnéhp prehrávanie (tiež nefunguje)
+
+*todo: premenne vo vetveniach
 
 
 **04.09.2023 - 10.09.2023
@@ -192,6 +198,8 @@ výrazy sa dajú vyhodnocovať, nadväzujú však na problém s premennými.
 * Zmena logiky prehrávania zvukov -> vlákna (iba hrubý náčrt, ešte treba vyskúšať viac ako 1)
 
 * Nekonecne cykly - problem (?)
+
+*todo: premenne vo vetveniach
 
 
 **11.09.2023 - 17.09.2023
@@ -201,6 +209,8 @@ výrazy sa dajú vyhodnocovať, nadväzujú však na problém s premennými.
 * Nekonecny cyklus nemusi byt - odstranene
 
 * Bugfix
+
+*todo: premenne vo vetveniach
 
 
 **18.09.2023 - 24.09.2023
@@ -262,6 +272,8 @@ výrazy sa dajú vyhodnocovať, nadväzujú však na problém s premennými.
 **27.10.2023 - 03.12.2023
 
 * Priprava prezentacie
+
+*todo: premenne vo vetveniach
 
 
 
