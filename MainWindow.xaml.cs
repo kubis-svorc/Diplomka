@@ -10,29 +10,52 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Console = System.Diagnostics.Debug;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace Diplomka
 {
 	public partial class MainWindow : Window
 	{
 		private int _startSubstr, _endSubstr, _caretPos;
-
 		private bool _isTextBoxFocused;
-
 		private CancellationTokenSource _cancelTokenSource;
-
+		private bool IsShiftPressed, IsCtrlPressed, IsAltPressed, DarkTheme;
 		private static string CurrentFilePath = null;
 
 		public MainWindow()
 		{
 			InitializeComponent();			
 			CodeTab.Text = @"vlakno hlavné
-  hraj c d:1000 h:100
-koniec
+	opakuj 5 krat
+		hraj c
+		c = 5
+		ak  c > 12
+			c = c - 1
+		koniec
+	koniec
+	
+	a = 12
+	ak a = 3
+		opakuj a krat
+			hraj g
+		koniec
+	koniec
+	inak
+		hraj e
+	koniec
 
-vlakno druhe
-  nastroj hlas 
-  hraj e d:1000 h:100 
+	urob prvypodprogram
+		opakuj 3 krat
+		koniec
+		b = 5
+		ak b < 5
+			b = b -1
+		koniec
+		inak 
+			b = b + 1
+		koniec
+	koniec
+	prvypodprogram
 koniec".ToLower();
 			 _cancelTokenSource = new CancellationTokenSource();
 			_isTextBoxFocused = true;
@@ -50,15 +73,11 @@ koniec".ToLower();
 			CodeTab.Focus();
 		}
 
-		protected override void OnClosing(CancelEventArgs e)
-		{
-			base.OnClosing(e);
-		}
-
 		private void OnExitClick(object sender, RoutedEventArgs e)
 		{
-			Close();
+			Application.Current.MainWindow.Close();
 			Application.Current.Shutdown(0);
+			Environment.Exit(0);
 		}
 
 		private void OnNovyClick(object sender, RoutedEventArgs e)
@@ -126,31 +145,34 @@ koniec".ToLower();
 				OnSaveAs(sender, e);
 				return;
             }
-			 
-			var dialog = new SaveFileDialog 
-			{
-				InitialDirectory = CurrentFilePath,
-				Title = "Uložiť program"
-			};
-			if (dialog.ShowDialog().Value)
-			{
-				string textPath = string.Concat(dialog.FileName, ".txt");
-				string midiPath = string.Concat(dialog.FileName, ".midi");
-				
-				try 
-				{
-					VirtualMachine.SaveMIDI(midiPath);
-					System.IO.File.WriteAllText(textPath, CodeTab.Text, System.Text.Encoding.UTF8);
-				}
-				catch (Exception ex) 
-				{
-					Console.WriteLine(ex.Message);
-					ErrorTab.Text = ex.Message;
-					ErrorTab.Focus();
-				}
-			}
-		}
 
+			string textPath = string.Concat(CurrentFilePath, ".txt");
+			string midiPath = string.Concat(CurrentFilePath, ".midi");
+
+			try
+			{
+				VirtualMachine.SaveMIDI(midiPath);
+				System.IO.File.WriteAllText(textPath, CodeTab.Text, System.Text.Encoding.UTF8);
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine(ex.Message);
+				ErrorTab.Text = ex.Message;
+				ErrorTab.Focus();
+			}
+
+			//var dialog = new SaveFileDialog 
+			//{
+			//	InitialDirectory = CurrentFilePath,
+			//	Title = "Uložiť program"
+			//};
+
+			//if (dialog.ShowDialog().Value)
+			//{
+				
+			//}
+		}
+				
 		private Syntax Compile()
 		{
 			var compiler = new Compiler(CodeTab.Text.ToLower());
@@ -224,10 +246,44 @@ koniec".ToLower();
 			_endSubstr = until;
 		}
 
-		private async void CodeTab_PreviewKeyUp(object sender, KeyEventArgs e)
+		private void CodeTab_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            switch (e.Key)
+            {
+				case Key.LeftShift:
+				case Key.RightShift:
+					IsShiftPressed = true;
+					break;
+				case Key.LeftCtrl:
+				case Key.RightCtrl:
+					IsCtrlPressed = true;
+					break;
+				case Key.LeftAlt:
+				case Key.RightAlt:
+					IsAltPressed = true;
+					break;
+				default:
+					break;
+            }
+        }
+		
+		private void CodeTab_PreviewKeyUp(object sender, KeyEventArgs e)
 		{
             switch (e.Key)
             {
+				case Key.LeftShift:
+				case Key.RightShift:
+					IsShiftPressed = false;
+					break;
+				case Key.LeftCtrl:
+				case Key.RightCtrl:
+					IsCtrlPressed = false;
+					break;
+				case Key.LeftAlt:
+				case Key.RightAlt:
+					IsAltPressed = false;
+					break;
+
 				case Key.F1:
 					if (!CodeTab.IsFocused)
 					{
@@ -244,30 +300,40 @@ koniec".ToLower();
 					item.Focus();
 					break;
 
-				case Key.F5:
-					if (e.KeyboardDevice.IsKeyDown(Key.LeftShift) || e.KeyboardDevice.IsKeyDown(Key.RightShift))
-					{
-						_cancelTokenSource.Cancel();
-						return;
-					}
-					try
-					{
-						_cancelTokenSource = new CancellationTokenSource();
-						await StartExec(_cancelTokenSource.Token);
-						await VirtualMachine.Play(_cancelTokenSource.Token);
-					}
-					catch (Exception ex)
-					{
-						CodeTab.IsReadOnly = false;
-						Console.WriteLine(ex.Message);
-					}
+				case Key.F5:					
+					PlayMusic();
 					break;
 				
 				case Key.H:
-					if (e.KeyboardDevice.IsKeyDown(Key.LeftCtrl) || e.KeyboardDevice.IsKeyDown(Key.RightCtrl))
+					if (IsCtrlPressed)
                     {
-						CodeTab.CaretIndex = FindNextHeading(CodeTab.Text, CodeTab.CaretIndex);
+						int wordStartIndex = CodeTab.CaretIndex;
+						for (int i = CodeTab.CaretIndex; i > 0; i--)
+                        {
+							if (!char.IsWhiteSpace(CodeTab.Text[i]))
+                            {
+								wordStartIndex = i;
+                            }
+							else
+                            {
+								break;
+                            }
+                        }
+						CodeTab.CaretIndex = FindNextHeading(CodeTab.Text, wordStartIndex);
                     }
+					break;
+
+				case Key.Subtract:
+					if (IsCtrlPressed)
+                    {
+						DecreaseFontSize();
+					}						
+					break;
+				case Key.Add:
+					if (IsCtrlPressed)
+                    {
+						IncreaseFontSize();
+					}					
 					break;
 
 				default:
@@ -275,24 +341,136 @@ koniec".ToLower();
             }
 		}
 
-        private int FindNextHeading(string text, int caret)
+        private void IncreaseFontSize()
+        {
+			if (CodeTab.FontSize >= 20)
+            {
+				return;
+            }
+			CodeTab.FontSize++;
+			ErrorTab.FontSize++;
+			SuggestionList.FontSize++;
+		}
+
+		private void DecreaseFontSize()
+        {
+			if (CodeTab.FontSize <= 8)
+            {
+				return;
+            }
+			CodeTab.FontSize--;
+			ErrorTab.FontSize--;
+			SuggestionList.FontSize--;
+		}
+
+		private void SwitchTheme(object sender, RoutedEventArgs e)
+        {
+			DarkTheme = !DarkTheme;
+			Brush text, bg;
+			if (DarkTheme)
+            {
+				text = Brushes.White;
+				bg = Brushes.Black;
+            }
+			else 
+			{
+				text = Brushes.Black;
+				bg = Brushes.White;
+			}
+
+			CodeTab.Foreground = text;
+			CodeTab.Background = bg;
+
+			ErrorTab.Foreground = text;
+			ErrorTab.Background = bg;
+
+			SuggestionList.Foreground = text;
+			SuggestionList.Background = bg;
+		}
+
+        private async void PlayMusic()
+        {
+			if (IsShiftPressed)
+			{
+				_cancelTokenSource.Cancel();
+				return;
+			}
+			try
+			{
+				_cancelTokenSource = new CancellationTokenSource();
+				await StartExec(_cancelTokenSource.Token);
+				await VirtualMachine.Play(_cancelTokenSource.Token);
+			}
+			catch (Exception ex)
+			{
+				CodeTab.IsReadOnly = false;
+				Console.WriteLine(ex.Message);
+			}
+		}
+
+        private void OnHelpClick(object sender, RoutedEventArgs e)
+        {
+			var window = new HelpWindow(DarkTheme)
+			{
+				Owner = this
+			};
+			window.ShowDialog();
+        }
+
+		private void OnPlayClick(object sender, RoutedEventArgs e)
+		{
+			PlayMusic();
+		}
+
+		private int FindNextHeading(string text, int caret)
         {
 			MatchCollection matches = Wrappers.KeywordContainer.RegexObj.Matches(text);
+			var depth = 0;
+			var currentDept = 0;
+			var nearestIndex = 0;
 
             foreach (Match match in matches)
             {
-				if (match.Index > caret)
+				if (match.Index == caret)
                 {
-					return match.Index;
+					break;
+                }
+				else if ("opakuj" == match.Value
+					|| "ak" == match.Value
+					|| "inak" == match.Value
+					|| "urob" == match.Value
+					|| "vlakno" == match.Value)
+				{
+					currentDept++;
+				}
+				else if ("koniec" == match.Value)
+                {
+					currentDept--;
                 }
             }
 
-			if (matches.Count > 0)
+            foreach (Match match in matches)
             {
-				return matches[0].Index;
-            }
+				if ("opakuj" == match.Value 
+					|| "ak" == match.Value 
+					|| "inak" == match.Value 
+					|| "urob" == match.Value 
+					|| "vlakno" == match.Value)
+                {
+					depth++;
+                }
+				else if ("koniec" == match.Value)
+                {
+					depth--;
+                }
 
-			return 0;
+				if (match.Index > caret && currentDept == depth)
+				{
+					nearestIndex = match.Index;
+					break;
+				}
+			}
+			return nearestIndex;
         }
 
 		private void SuggestionList_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -319,5 +497,7 @@ koniec".ToLower();
 			CodeTab.CaretIndex = _caretPos;
 			return;	
         }
+    
+		
     }
 }

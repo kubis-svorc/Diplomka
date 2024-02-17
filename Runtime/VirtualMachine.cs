@@ -275,9 +275,7 @@ namespace Diplomka.Runtime
         {
 			ChannelMessage message = new ChannelMessage(ChannelCommand.ProgramChange, Channel, instrumentCode, 0);
 			MyMusicCommand command = new MyMusicCommand(message, 0);
-			StoreCommand(command);
-			//outDevice.Send(message);
-			//System.Threading.Thread.Sleep(0);
+			StoreCommand(command);			
 		}
 
 		public static void SetTone(int tone, int duration, int volume)

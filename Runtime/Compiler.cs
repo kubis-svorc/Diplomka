@@ -269,16 +269,17 @@
 					bodyT = Parse();					
 					keyword = analyzer.ToString();
 					analyzer.Check(Kind.WORD, "koniec");
+					var ifesle = new IfElse(test, bodyT, bodyF);
 					Scan();
 					keyword = analyzer.ToString();
 					if ("inak" == keyword) 
 					{
 						Scan();
-						bodyF = Parse();
+						ifesle._bodyFalse = Parse();
 						Scan();
 					}
 					analyzer.Check(Kind.WORD, "koniec");
-					result.Add(new IfElse(test, bodyT, bodyF));
+					result.Add(ifesle);
                 }
 
 				else if ("def" == keyword || "fun" == keyword || "funkcia" == keyword || "urob" == keyword)

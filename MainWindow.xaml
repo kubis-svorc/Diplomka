@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Nieco sick"
+        Title="MusIK"
         x:Name="MyWindow" Width="826" Height="554">
 
     <Window.CommandBindings>
@@ -30,10 +30,14 @@
                 <MenuItem Header="_Otvor" Click="OnOpenFile" InputGestureText="Ctrl + O"/>
                 <MenuItem Header="_Uložiť" Click="OnSave" InputGestureText="Ctrl + S"/>
                 <MenuItem Header="Uložiť _ako" Click="OnSaveAs" InputGestureText="Ctrl + Shift + S"/>
-                <MenuItem Header="Ukončiť" Click="OnExitClick" InputGestureText="Alt + F4"/>
+                <MenuItem Header="U_končiť" Click="OnExitClick" InputGestureText="Alt + F4"/>
             </MenuItem>
-            <MenuItem Header="_Pomoc">
-                <MenuItem Header="O P_rograme"/>
+            <MenuItem Header="_Program">
+                <MenuItem Header="_Hraj / Stop" Click="OnPlayClick"/>
+                <MenuItem Header="_Pomoc" Click="OnHelpClick"/>                
+            </MenuItem>
+            <MenuItem Header="Nastavenia">
+                <MenuItem Header="Tmavý _režim" Click="SwitchTheme"/>
             </MenuItem>
         </Menu>
 
@@ -47,18 +51,19 @@
             </Grid.ColumnDefinitions>
             <TextBox Text="" Margin="6,28,-673,0" VerticalAlignment="Top" Height="330" RenderTransformOrigin="0.5,0.5" Grid.ColumnSpan="2" AcceptsReturn="True" Background="Black" Foreground="LightGray"
                      x:Name="CodeTab" Grid.Row="1" AcceptsTab="True" IsTabStop="True"
-                     PreviewKeyUp="CodeTab_PreviewKeyUp" 
-                     KeyUp="CodeTab_KeyUp"/>
+                     PreviewKeyUp="CodeTab_PreviewKeyUp" PreviewKeyDown="CodeTab_PreviewKeyDown"
+                     KeyUp="CodeTab_KeyUp" FontSize="10"/>
+
             <!--PreviewKeyDown="CodeTab_PreviewKeyDown"-->
 
             <ListView x:Name="SuggestionList" Margin="6,362,-673,50" 
                       Grid.ColumnSpan="2" Background="Black" SelectionMode="Single" Foreground="White" 
                       Grid.Row="2" Width="800" Height="72" VerticalAlignment="Top" 
-                      PreviewKeyDown="SuggestionList_PreviewKeyDown">
+                      PreviewKeyDown="SuggestionList_PreviewKeyDown" FontSize="10">
                 <!--SelectionChanged="Suggestion_Selected"-->
             </ListView>
             <TextBox Margin="6,439,-673,0" VerticalAlignment="Top" Height="72" Grid.ColumnSpan="2" AcceptsReturn="True" IsReadOnly="True" Name="ErrorTab" Background="Black" Foreground="White"
-                     Grid.Row="3"/>
+                     Grid.Row="3" FontSize="10"/>
         </Grid>
     </Grid>
 </Window>

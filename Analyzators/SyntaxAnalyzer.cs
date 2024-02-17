@@ -373,7 +373,7 @@
 
 	public class IfElse : Syntax
 	{
-		private Syntax _test, _bodyTrue, _bodyFalse;
+		public Syntax _test, _bodyTrue, _bodyFalse;
 		
 		public IfElse(Syntax test, Syntax bodyT, Syntax bodyF=null)
 		{
@@ -504,7 +504,8 @@
         {
 			if (VirtualMachine.Channel > VirtualMachine.MAX_THREAD_THRESHOLD)
             {
-				throw new Exceptions.ThreadExceededException("Maximálny počet vlákien je 4");
+				
+				new Exceptions.ThreadExceededException("Maximálny počet vlákien je 4");
             }
 			VirtualMachine.Poke((int)Instruction.Thrd);
 			_block.Generate();

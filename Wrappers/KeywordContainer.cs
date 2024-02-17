@@ -21,11 +21,23 @@ namespace Diplomka.Wrappers
 
             Headers = new HashSet<string> 
             { 
-                "opakuj", "ak", "inak", "urob", "vlakno"
+                "opakuj", "ak", "inak", "urob", "vlakno", "koniec"
             };
 
-            HeaderPattern = string.Join("|", Headers.Select(Regex.Escape));
-            RegexObj = new Regex($@"\b({HeaderPattern})");
+            //HeaderPattern = string.Join("|", Headers.Select(Regex.Escape));
+            System.Text.StringBuilder stringBuilder = new System.Text.StringBuilder();
+            int i = 0;
+            foreach (string word in Headers)
+            {
+                stringBuilder.Append(@"\b");
+                stringBuilder.Append(word);
+                stringBuilder.Append(@"\b");
+                if (++i < Headers.Count)
+                {
+                    stringBuilder.Append("|");
+                }
+            }
+            RegexObj = new Regex(stringBuilder.ToString());
 
         }
     }
