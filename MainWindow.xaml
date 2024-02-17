@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="MusIK"
-        x:Name="MyWindow" Width="826" Height="554">
+        x:Name="MyWindow" Width="800" Height="650">
 
     <Window.CommandBindings>
         <CommandBinding Command="Open"  Executed="OnOpenFile"/>
@@ -22,9 +22,16 @@
         <KeyBinding Key="F4" Modifiers="Alt" Command="Close"/>
     </Window.InputBindings>
 
-    <Grid Margin="0,0,0,0">
+    <Grid>        
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>      
+        
         <!-- Navigation menu bar -->
-        <Menu Margin="0,0,0,24" x:Name="MyMenu">
+        <Menu x:Name="MyMenu" Grid.Row="0" Width="Auto">
             <MenuItem Header="_Súbor">
                 <MenuItem Header="_Nový" Click="OnNovyClick" InputGestureText="Ctrl + N"/>
                 <MenuItem Header="_Otvor" Click="OnOpenFile" InputGestureText="Ctrl + O"/>
@@ -34,36 +41,74 @@
             </MenuItem>
             <MenuItem Header="_Program">
                 <MenuItem Header="_Hraj / Stop" Click="OnPlayClick"/>
-                <MenuItem Header="_Pomoc" Click="OnHelpClick"/>                
+                <MenuItem Header="_Pomoc" Click="OnHelpClick"/>
             </MenuItem>
-            <MenuItem Header="Nastavenia">
-                <MenuItem Header="Tmavý _režim" Click="SwitchTheme"/>
+            <MenuItem Header="_Nastavenia">
+                <MenuItem Header="Tmavý _režim" Click="SwitchTheme" x:Name="ColorSwitcher"/>
             </MenuItem>
         </Menu>
 
-        <Grid Margin="0,0,0,0">
-
-            <!-- Text boxes for Tab 1 -->
-
+        <!-- Code editor -->
+        <!--<Grid Grid.Row="1">
+            
+            
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" MinWidth="107.457" />
-                <ColumnDefinition Width="Auto" MinWidth="0" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <TextBox Text="" Margin="6,28,-673,0" VerticalAlignment="Top" Height="330" RenderTransformOrigin="0.5,0.5" Grid.ColumnSpan="2" AcceptsReturn="True" Background="Black" Foreground="LightGray"
-                     x:Name="CodeTab" Grid.Row="1" AcceptsTab="True" IsTabStop="True"
+            <TextBox VerticalAlignment="Top" MinHeight="280" Margin="5,0,5,5"
+                     Height="Auto" Width="Auto" AcceptsReturn="True" Background="Black" Foreground="LightGray"
+                     x:Name="CodeTab" AcceptsTab="True" IsTabStop="True"
                      PreviewKeyUp="CodeTab_PreviewKeyUp" PreviewKeyDown="CodeTab_PreviewKeyDown"
-                     KeyUp="CodeTab_KeyUp" FontSize="10"/>
+                     KeyUp="CodeTab_KeyUp" FontSize="10"
+                     Grid.ColumnSpan="2" Grid.RowSpan="2"/>
+        </Grid>-->
 
-            <!--PreviewKeyDown="CodeTab_PreviewKeyDown"-->
-
-            <ListView x:Name="SuggestionList" Margin="6,362,-673,50" 
-                      Grid.ColumnSpan="2" Background="Black" SelectionMode="Single" Foreground="White" 
-                      Grid.Row="2" Width="800" Height="72" VerticalAlignment="Top" 
-                      PreviewKeyDown="SuggestionList_PreviewKeyDown" FontSize="10">
-                <!--SelectionChanged="Suggestion_Selected"-->
-            </ListView>
-            <TextBox Margin="6,439,-673,0" VerticalAlignment="Top" Height="72" Grid.ColumnSpan="2" AcceptsReturn="True" IsReadOnly="True" Name="ErrorTab" Background="Black" Foreground="White"
-                     Grid.Row="3" FontSize="10"/>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="50*"/>
+            </Grid.ColumnDefinitions>
+            
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <Grid Name="parent_textBox">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="121*"/>
+                        <RowDefinition Height="62*"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="0*" />
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="LineNumerator" VerticalScrollBarVisibility="Disabled" IsReadOnly="True" Padding="5" TextAlignment="Right" Grid.RowSpan="2" 
+                             FontSize="10"/>
+                    <TextBox AutomationProperties.Name="Kód" 
+                             Padding="5" 
+                             x:Name="CodeTab" 
+                             Grid.Column="1" 
+                             AcceptsReturn="True" 
+                             Grid.ColumnSpan="2" 
+                             Grid.RowSpan="2" 
+                             AcceptsTab="True"
+                             PreviewKeyUp="CodeTab_PreviewKeyUp"
+                             PreviewKeyDown="CodeTab_PreviewKeyDown"
+                             KeyUp="CodeTab_KeyUp"
+                             TextChanged="CodeTab_TextChanged"
+                             FontSize="10"
+                             />
+                </Grid>
+            </ScrollViewer>
         </Grid>
+
+        <!-- Suggestion list -->
+        <ListView x:Name="SuggestionList" Grid.Row="2" SelectionMode="Single"
+                      Height="72" VerticalAlignment="Top"
+                      PreviewKeyDown="SuggestionList_PreviewKeyDown" FontSize="10" />
+
+        <TextBox VerticalAlignment="Top" Grid.Row="3"
+                 Height="72" AcceptsReturn="True" IsReadOnly="True" Name="ErrorTab" FontSize="10" />        
     </Grid>
 </Window>

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading;
-using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
 using Diplomka.Runtime;
@@ -11,6 +10,7 @@ using System.Text.RegularExpressions;
 using Console = System.Diagnostics.Debug;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.IO;
 
 namespace Diplomka
 {
@@ -75,6 +75,15 @@ koniec".ToLower();
 
 		private void OnExitClick(object sender, RoutedEventArgs e)
 		{
+			MessageBoxResult result = MessageBox.Show(
+				"Ste si istý, že chcete ukončiť aplikáciu?\r\nNeuložené zmeny môžu byť stratené.",
+				"Ukončiť",
+				MessageBoxButton.YesNo);
+
+			if (MessageBoxResult.No == result)
+            {
+				return;
+            }
 			Application.Current.MainWindow.Close();
 			Application.Current.Shutdown(0);
 			Environment.Exit(0);
@@ -100,12 +109,14 @@ koniec".ToLower();
 			if (dialog.ShowDialog().Value)
             {
 				string textPath = dialog.FileName;
-				CurrentFilePath = System.IO.Path.GetDirectoryName(textPath);
+				CurrentFilePath = Path.Combine(
+                    Path.GetDirectoryName(textPath),
+                    Path.GetFileNameWithoutExtension(textPath));
 				try 
 				{
-					CodeTab.Text = System.IO.File.ReadAllText(textPath);
+					CodeTab.Text = File.ReadAllText(textPath);
 				}
-                catch (System.IO.IOException ex)
+                catch (IOException ex)
                 {
 					ErrorTab.AppendText($"Nebolo možné otvoriť súbor: {ex.Message}");
                 }
@@ -123,15 +134,14 @@ koniec".ToLower();
 			{
 				string textPath = string.Concat(dialog.FileName, ".txt");
 				string midiPath = string.Concat(dialog.FileName, ".midi");
-				CurrentFilePath = System.IO.Path.GetDirectoryName(dialog.FileName);
+				CurrentFilePath = Path.GetDirectoryName(dialog.FileName);
 				try
 				{
 					VirtualMachine.SaveMIDI(midiPath);
-					System.IO.File.WriteAllText(textPath, CodeTab.Text, System.Text.Encoding.UTF8);
+                    File.WriteAllText(textPath, CodeTab.Text, System.Text.Encoding.UTF8);
 				}
 				catch (Exception ex)
 				{
-					Console.WriteLine(ex.Message);
 					ErrorTab.Text = ex.Message;
 					ErrorTab.Focus();
 				}
@@ -152,25 +162,13 @@ koniec".ToLower();
 			try
 			{
 				VirtualMachine.SaveMIDI(midiPath);
-				System.IO.File.WriteAllText(textPath, CodeTab.Text, System.Text.Encoding.UTF8);
+				File.WriteAllText(textPath, CodeTab.Text, System.Text.Encoding.UTF8);
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine(ex.Message);
 				ErrorTab.Text = ex.Message;
 				ErrorTab.Focus();
-			}
-
-			//var dialog = new SaveFileDialog 
-			//{
-			//	InitialDirectory = CurrentFilePath,
-			//	Title = "Uložiť program"
-			//};
-
-			//if (dialog.ShowDialog().Value)
-			//{
-				
-			//}
+			}			
 		}
 				
 		private Syntax Compile()
@@ -183,7 +181,6 @@ koniec".ToLower();
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine(ex.Message);
 				ErrorTab.Text = ex.Message;
 				_ = ErrorTab.Focus();
 				return null;
@@ -197,15 +194,12 @@ koniec".ToLower();
 			Syntax tree = Compile();			
 			if (null == tree)
 			{
-				Console.WriteLine("tree is null");
 				CodeTab.IsReadOnly = false;
 				return;
 			}
 			// execution
-			Console.WriteLine("Parse tree finished");
 			VirtualMachine.SetJumpToProgramBody();
 			tree.Generate();
-			Console.WriteLine("program started");
 			VirtualMachine.Start();
 			CodeTab.IsReadOnly = false;
 		}
@@ -350,6 +344,7 @@ koniec".ToLower();
 			CodeTab.FontSize++;
 			ErrorTab.FontSize++;
 			SuggestionList.FontSize++;
+			LineNumerator.FontSize++;
 		}
 
 		private void DecreaseFontSize()
@@ -361,6 +356,7 @@ koniec".ToLower();
 			CodeTab.FontSize--;
 			ErrorTab.FontSize--;
 			SuggestionList.FontSize--;
+			LineNumerator.FontSize--;
 		}
 
 		private void SwitchTheme(object sender, RoutedEventArgs e)
@@ -371,11 +367,13 @@ koniec".ToLower();
             {
 				text = Brushes.White;
 				bg = Brushes.Black;
-            }
+				ColorSwitcher.Header = "Svetlý _režim";
+			}
 			else 
 			{
 				text = Brushes.Black;
 				bg = Brushes.White;
+				ColorSwitcher.Header = "Tmavý _režim";
 			}
 
 			CodeTab.Foreground = text;
@@ -386,9 +384,24 @@ koniec".ToLower();
 
 			SuggestionList.Foreground = text;
 			SuggestionList.Background = bg;
+
+			LineNumerator.Foreground = text;
+			LineNumerator.Background = bg;
+		}
+	
+		private void CodeTab_TextChanged(object sender, TextChangedEventArgs e)
+        {
+			UpdateLineNumerator();
+        }
+
+		private void UpdateLineNumerator()
+        {
+			var regex = new Regex("\r\n|\n|\r");
+			int lineCount = regex.Matches(CodeTab.Text).Count + 1;
+			LineNumerator.Text = string.Join(Environment.NewLine, Enumerable.Range(1, lineCount).Select(i => i.ToString().PadLeft(3) + "  "));
 		}
 
-        private async void PlayMusic()
+		private async void PlayMusic()
         {
 			if (IsShiftPressed)
 			{
@@ -404,7 +417,6 @@ koniec".ToLower();
 			catch (Exception ex)
 			{
 				CodeTab.IsReadOnly = false;
-				Console.WriteLine(ex.Message);
 			}
 		}
 
@@ -478,7 +490,6 @@ koniec".ToLower();
 			if (Key.Enter == e.Key)
 			{
 				string selectedValue = SuggestionList.SelectedItem.ToString();
-				Console.WriteLine(selectedValue);
 				string prefix = CodeTab.Text.Substring(0, _startSubstr);
 				string postFix = CodeTab.Text.Substring(_endSubstr);
 				CodeTab.Text = string.Concat(prefix, selectedValue, postFix);
