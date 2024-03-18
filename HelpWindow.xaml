@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="Pomoc" Height="450" Width="800">
     <Grid>
-        <TextBox IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Name="HelpTab" />
+        <TextBox IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Name="HelpTab" HorizontalAlignment="Center" TextAlignment="Center" KeyDown="HelpTab_KeyDown" />
         <Button Content="OK" HorizontalAlignment="Center" VerticalAlignment="Bottom" Click="OK_Button_Click" Width="80px" Margin="10"/>
     </Grid>
 </Window>

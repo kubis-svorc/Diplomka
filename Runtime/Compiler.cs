@@ -77,92 +77,112 @@
 			int code;
 			switch (tone)
 			{
+				case "c1":
 				case "c":
 					code = (int)Tone.C;
 					break;
-				case "ck":
-				case "db":
-					code = (int)Tone.Cis;
+				case "c1k":
+				case "d1b":
+                case "ck":
+                case "db":
+                    code = (int)Tone.Cis;
 					break;
+				case "d1":
 				case "d":
 					code = (int)Tone.D;
 					break;
-				case "dk":
-				case "eb":
-					code = (int)Tone.Dis;
+				case "d1k":
+				case "e1b":
+                case "dk":
+                case "eb":
+                    code = (int)Tone.Dis;
 					break;
-				case "e":
-				case "fb":
-					code = (int)Tone.E;
+				case "e1":
+				case "f1b":
+                case "e":
+                case "fb":
+                    code = (int)Tone.E;
 					break;
-				case "ek":
-				case "f":
-					code = (int)Tone.F;
+				case "e1k":
+				case "f1":
+                case "ek":
+                case "f":
+                    code = (int)Tone.F;
 					break;
-				case "fk":
-				case "gb":
-					code = (int)Tone.Fis;
+				case "f1k":
+				case "g1b":
+                case "fk":
+                case "gb":
+                    code = (int)Tone.Fis;
 					break;
+				case "g1":
 				case "g":
 					code = (int)Tone.G;
 					break;
-				case "gk":
-				case "ab":
-					code = (int)Tone.Gis;
+				case "g1k":
+				case "a1b":
+                case "gk":
+                case "ab":
+                    code = (int)Tone.Gis;
 					break;
+				case "a1":
 				case "a":
 					code = (int)Tone.A;
 					break;
-				case "ak":
-				case "b":
-					code = (int)Tone.B;
+				case "a1k":
+				case "b1":
+                case "ak":
+                case "b":
+                    code = (int)Tone.B;
 					break;
-				case "h":
-				case "cb":
-					code = (int)Tone.H;
+				case "h1":
+				case "c1b":
+                case "h":
+                case "cb":
+                    code = (int)Tone.H;
 					break;
 				case "c2":
 					code = (int)Tone.C2;
 					break;
-				case "ck2":
-				case "db2":
+				case "c2k":
+				case "d2b":
 					code = (int)Tone.Cis2;
 					break;
 				case "d2":
 					code = (int)Tone.D2;
 					break;
-				case "dk2":
-				case "eb2":
+				case "d2k":
+				case "e2b":
 					code = (int)Tone.Dis2;
 					break;
 				case "e2":
-				case "fb2":
+				case "f2b":
 					code = (int)Tone.E2;
 					break;
-				case "ek2":
+				case "e2k":
 				case "f2":
 					code = (int)Tone.F2;
 					break;
-				case "fk2":
-				case "gb2":
+				case "f2k":
+				case "g2b":
 					code = (int)Tone.Fis2;
 					break;
 				case "g2":
 					code = (int)Tone.G2;
 					break;
-				case "gk2":
-				case "ab2":
+				case "g2k":
+				case "a2b":
 					code = (int)Tone.Gis2;
 					break;
 				case "a2":
 					code = (int)Tone.A2;
 					break;
-				case "ak2":
+				case "a2k":
 				case "b2":
 					code = (int)Tone.B2;
 					break;
 				case "h2":
-				case "cb2":
+				case "c2b":
 					code = (int)Tone.H2;
 					break;
 				case "c3":
@@ -254,7 +274,7 @@
 					else
                     {
 						Syntax count = Compare();
-						analyzer.Check(Kind.WORD, new string[] { "krat", "krát" });
+						analyzer.Check(Kind.WORD, "krat");
 						Scan();
 						result.Add(new ForLoop(count, Parse()));						
 						Scan();
@@ -289,11 +309,9 @@
 					string name = analyzer.ToString();
 					if (VirtualMachine.Variables.ContainsKey(name) || VirtualMachine.Subroutines.ContainsKey(name))
                     {
-						//throw new Exceptions.NameException($"Name {name} is already being used");
 						return result;
                     }
 					Scan();
-					//analyzer.Check(Kind.WORD, "zac");
 					Subroutine sub = new Subroutine(name, null);
 					VirtualMachine.Subroutines.Add(name, sub);
 					sub.body = Parse();
@@ -348,7 +366,7 @@
                     {
 						if (!VirtualMachine.Subroutines.ContainsKey(name))
 						{
-							throw new System.Collections.Generic.KeyNotFoundException($"Nepoznám {name}");
+							throw new System.Collections.Generic.KeyNotFoundException($"Chyba v riadku {analyzer.row} : Nepoznám {name}");
 						}
 						result.Add(new Call(name));
 					}
@@ -357,12 +375,13 @@
                     {
 						if (VirtualMachine.Subroutines.ContainsKey(name))
 						{
-							throw new Exceptions.NameException($"Podprogram {name} je už raz zadefinovaný");
+							throw new Exceptions.NameException($"Chyba v riadku {analyzer.row} : Podprogram {name} je už raz zadefinovaný");
 						}
 						
 						Scan();
 						if ("losuj" == analyzer.ToString())
 						{
+							Scan();
 							Syntax randomVal = NumberGenerator();
 							result.Add(new Assign(new Variable(name), randomVal));
 							if (!VirtualMachine.Variables.ContainsKey(name))
@@ -397,7 +416,7 @@
                 }
 				else if (!VirtualMachine.Variables.ContainsKey(name))
                 {
-					throw new System.Collections.Generic.KeyNotFoundException($"Nepoznám premennú {name}");
+					throw new System.Collections.Generic.KeyNotFoundException($"Chyba v riadku {analyzer.row} : Nepoznám premennú {name}");
                 }
 				else
                 {

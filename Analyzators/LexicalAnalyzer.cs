@@ -11,7 +11,7 @@
 
 		public char look;
 
-		public int index, position;
+		public int index, position, row;
 
 		private const char END = '\0';
 
@@ -21,6 +21,7 @@
 
 		public LexicalAnalyzer()
 		{
+			row = 1;
 			token = new StringBuilder();
 		}
 
@@ -34,6 +35,10 @@
 			{
 				look = input[index];
 				index++;
+			}
+			if (look == '\n')
+			{
+				row++;
 			}
 		}
 
@@ -96,6 +101,7 @@
 		public void Init()
 		{
 			index = 0;
+			row = 1;
 			Next();
 			Scan();									
 		}
@@ -138,30 +144,29 @@
 
 			if (kind != expected)
 			{
-				string message;
-				switch (expected)
+				string message;				
+                switch (expected)
 				{
 					case Kind.NUMBER:
-						message = $"Chyba na pozicií {position} : Očakával som číslo, dostal som {kindStr}";
+						message = $"Chyba v riadku {row} : Očakával som číslo, dostal som {kindStr}";
 						break;
 					case Kind.WORD:
-						message = $"Chyba na pozicií {position} : Očakával som slovo, dostal som {kindStr}";
+						message = $"Chyba v riadku {row} : Očakával som slovo, dostal som {kindStr}";
 						break;
 					case Kind.NOTHING:
-						message = $"Chyba na pozicií {position} : Očákával som koniec programu, dostal som {kindStr}";
+						message = $"Chyba v riadku  {row} : Očákával som koniec programu, dostal som {kindStr}";
 						break;
 					case Kind.SYMBOL:
 					default:
-						message = $"Chyba na pozicií {position} : Očakával som symbol, dostal som {kindStr}";
+						message = $"Chyba v riadku  {row} : Očakával som symbol, dostal som {kindStr}";
 						break;
 				}
 				throw new SyntaxException(message);
 			}
 
 			if (!string.IsNullOrWhiteSpace(expectedToken) && expectedToken != ToString())
-			{
-				int row = input.Substring(0, position).Count(s => s == '\r');
-				string actualToken = ToString();
+			{                
+                string actualToken = ToString();
 				if (string.IsNullOrEmpty(actualToken))
                 {
 					actualToken = "nič";
@@ -215,7 +220,7 @@
 
 			if (!expectedTokens.Contains<string>(ToString()))
             {
-				int row = input.Substring(0, position).Count(s => s == '\r');
+				int row = input.Substring(0, position).Count(s => s == '\n');
 				string actualToken = ToString();
 				if (string.IsNullOrEmpty(actualToken))
 				{

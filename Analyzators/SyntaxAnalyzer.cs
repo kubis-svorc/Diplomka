@@ -1,8 +1,10 @@
 ﻿namespace Diplomka.Analyzators
 {
 	using Runtime;
+    using System;
+    using System.Windows.Documents;
 
-	public class SyntaxAnalyzer
+    public class SyntaxAnalyzer
 	{
 		
 	}
@@ -76,6 +78,25 @@
 		}
 	}
 
+	public class Accord : MidiCommand
+	{
+
+		private System.Collections.Generic.List<string> _tones;
+		private Const _duration, _volume;
+
+		public Accord(System.Collections.Generic.List<string> tones, Const duration, Const volume)
+		{
+			_tones = tones;
+			_duration = duration;
+			_volume = volume;
+		}
+
+        public override void Generate()
+        {
+			
+        }
+    }
+
 	public class Instrument : MidiCommand
 	{
 		private Syntax _instrumentCode;
@@ -131,7 +152,7 @@
 		public override void Generate()
 		{
 			_count.Generate();
-			int bodyLoop = VirtualMachine.adr;
+			int bodyLoop = VirtualMachine.ADR;
 			_body.Generate();
 			VirtualMachine.Poke((int)Instruction.Loop);
 			VirtualMachine.Poke(bodyLoop);
@@ -149,7 +170,7 @@
 
 		public override void Generate()
 		{
-			int bodyAddress = VirtualMachine.adr;
+			int bodyAddress = VirtualMachine.ADR;
 			_body.Generate();
 			VirtualMachine.Poke((int)Instruction.Jmp);
 			VirtualMachine.Poke(bodyAddress);
@@ -168,15 +189,15 @@
 
         public override void Generate()
         {
-			int testAdr = VirtualMachine.adr;
+			int testAdr = VirtualMachine.ADR;
 			_test.Generate();
 			VirtualMachine.Poke((int)Instruction.JmpIfFalse);
-			int jumpLoop = VirtualMachine.adr;
-			VirtualMachine.adr++;
+			int jumpLoop = VirtualMachine.ADR;
+			VirtualMachine.ADR++;
 			_body.Generate();
 			VirtualMachine.Poke((int)Instruction.Jmp);
 			VirtualMachine.Poke(testAdr);
-			VirtualMachine.mem[jumpLoop] = VirtualMachine.adr;
+			VirtualMachine.MEM[jumpLoop] = VirtualMachine.ADR;
         }
     }
 
@@ -290,8 +311,8 @@
 	public class Variable : Syntax
 	{
 		private string _name;
-
-		public Variable(string name)
+        public string Name { get { return _name; } }
+        public Variable(string name)
 		{
 			_name = name;
 		}
@@ -331,17 +352,23 @@
 	public class Print : Syntax
 	{
 		private Syntax _expression;
+		private string _name;
 
 		public Print(Syntax expr)
 		{
 			_expression = expr;
+			if (_expression is Variable)
+			{
+				_name = (_expression as Variable).Name;
+			}
 		}
 
 		public override void Generate()
 		{
-			_expression.Generate();
+			//_expression.Generate();
 			VirtualMachine.Poke((int)Instruction.Print);
-		}
+            VirtualMachine.Poke(VirtualMachine.Variables[_name]);
+        }
 
 	}
 
@@ -362,12 +389,12 @@
 		public override void Generate()
 		{
 			VirtualMachine.Poke((int)Instruction.Jmp);
-			VirtualMachine.adr++;
-			bodyAdr = VirtualMachine.adr;
+			VirtualMachine.ADR++;
+			bodyAdr = VirtualMachine.ADR;
 			body.Generate();
 			VirtualMachine.Poke((int)Instruction.Return);
-			VirtualMachine.mem[bodyAdr - 1] = VirtualMachine.adr;
-			bodyEndAdr = VirtualMachine.adr;
+			VirtualMachine.MEM[bodyAdr - 1] = VirtualMachine.ADR;
+			bodyEndAdr = VirtualMachine.ADR;
 		}
 	}
 
@@ -386,21 +413,21 @@
 		{
 			_test.Generate();
 			VirtualMachine.Poke((int)Instruction.JmpIfFalse);
-			int jmpAddress = VirtualMachine.adr;
-			VirtualMachine.adr++; // ????
+			int jmpAddress = VirtualMachine.ADR;
+			VirtualMachine.ADR++; // ????
 			_bodyTrue.Generate();
 			if (_bodyFalse == null)
 			{
-				VirtualMachine.mem[jmpAddress] = VirtualMachine.adr;
+				VirtualMachine.MEM[jmpAddress] = VirtualMachine.ADR;
 			}
 			else
 			{
 				VirtualMachine.Poke((int)Instruction.Jmp);
-				int jmpFalseAddress = VirtualMachine.adr;
-				VirtualMachine.adr++; // ????
-				VirtualMachine.mem[jmpAddress] = VirtualMachine.adr;
+				int jmpFalseAddress = VirtualMachine.ADR;
+				VirtualMachine.ADR++; // ????
+				VirtualMachine.MEM[jmpAddress] = VirtualMachine.ADR;
 				_bodyFalse.Generate();
-				VirtualMachine.mem[jmpFalseAddress] = VirtualMachine.adr;
+				VirtualMachine.MEM[jmpFalseAddress] = VirtualMachine.ADR;
 			}
 		}
 	}
@@ -502,7 +529,7 @@
 
         public override void Generate()
         {
-			if (VirtualMachine.Channel > VirtualMachine.MAX_THREAD_THRESHOLD)
+			if (VirtualMachine.CHANNEL > VirtualMachine.MAX_THREAD_THRESHOLD)
             {
 				
 				new Exceptions.ThreadExceededException("Maximálny počet vlákien je 4");

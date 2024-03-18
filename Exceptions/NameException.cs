@@ -4,7 +4,7 @@ namespace Diplomka.Exceptions
 {
     public class NameException : ApplicationException
     {
-        public NameException(string messsage) : base(messsage)
+        public NameException(string message) : base(message)
         {
             ;
         }

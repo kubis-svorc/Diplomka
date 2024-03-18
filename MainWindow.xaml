@@ -31,7 +31,7 @@
         </Grid.RowDefinitions>      
         
         <!-- Navigation menu bar -->
-        <Menu x:Name="MyMenu" Grid.Row="0" Width="Auto">
+        <Menu Grid.Row="0" Width="Auto" x:Name="MyMenu" AutomationProperties.Name="Hlavná ponuka">
             <MenuItem Header="_Súbor">
                 <MenuItem Header="_Nový" Click="OnNovyClick" InputGestureText="Ctrl + N"/>
                 <MenuItem Header="_Otvor" Click="OnOpenFile" InputGestureText="Ctrl + O"/>
@@ -40,32 +40,13 @@
                 <MenuItem Header="U_končiť" Click="OnExitClick" InputGestureText="Alt + F4"/>
             </MenuItem>
             <MenuItem Header="_Program">
-                <MenuItem Header="_Hraj / Stop" Click="OnPlayClick"/>
-                <MenuItem Header="_Pomoc" Click="OnHelpClick"/>
+                <MenuItem Header="_Hraj / Stop" Click="OnPlayClick" InputGestureText="F5 / Shift + F5"/>
+                <MenuItem Header="_Pomoc" Click="OnHelpClick" InputGestureText="F1"/>
             </MenuItem>
             <MenuItem Header="_Nastavenia">
                 <MenuItem Header="Tmavý _režim" Click="SwitchTheme" x:Name="ColorSwitcher"/>
             </MenuItem>
         </Menu>
-
-        <!-- Code editor -->
-        <!--<Grid Grid.Row="1">
-            
-            
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <TextBox VerticalAlignment="Top" MinHeight="280" Margin="5,0,5,5"
-                     Height="Auto" Width="Auto" AcceptsReturn="True" Background="Black" Foreground="LightGray"
-                     x:Name="CodeTab" AcceptsTab="True" IsTabStop="True"
-                     PreviewKeyUp="CodeTab_PreviewKeyUp" PreviewKeyDown="CodeTab_PreviewKeyDown"
-                     KeyUp="CodeTab_KeyUp" FontSize="10"
-                     Grid.ColumnSpan="2" Grid.RowSpan="2"/>
-        </Grid>-->
 
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
@@ -84,8 +65,9 @@
                         <ColumnDefinition/>
                     </Grid.ColumnDefinitions>
                     <TextBox x:Name="LineNumerator" VerticalScrollBarVisibility="Disabled" IsReadOnly="True" Padding="5" TextAlignment="Right" Grid.RowSpan="2" 
-                             FontSize="10"/>
+                             FontSize="10" AutomationProperties.Name="Číselník riadkov" />
                     <TextBox AutomationProperties.Name="Kód" 
+                             AutomationProperties.AutomationId="Kód"
                              Padding="5" 
                              x:Name="CodeTab" 
                              Grid.Column="1" 
@@ -98,6 +80,7 @@
                              KeyUp="CodeTab_KeyUp"
                              TextChanged="CodeTab_TextChanged"
                              FontSize="10"
+                             TextWrapping="Wrap"
                              />
                 </Grid>
             </ScrollViewer>
@@ -106,9 +89,9 @@
         <!-- Suggestion list -->
         <ListView x:Name="SuggestionList" Grid.Row="2" SelectionMode="Single"
                       Height="72" VerticalAlignment="Top"
-                      PreviewKeyDown="SuggestionList_PreviewKeyDown" FontSize="10" />
+                      PreviewKeyDown="SuggestionList_PreviewKeyDown" FontSize="10" AutomationProperties.Name="Ponuka príkazov"/>
 
-        <TextBox VerticalAlignment="Top" Grid.Row="3"
-                 Height="72" AcceptsReturn="True" IsReadOnly="True" Name="ErrorTab" FontSize="10" />        
+        <ListView VerticalAlignment="Top" Grid.Row="3"
+                 Height="72" x:Name="ErrorTab" FontSize="10" AutomationProperties.Name="Panel s hláseniami" PreviewKeyUp="ErrorTab_PreviewKeyUp" />
     </Grid>
 </Window>

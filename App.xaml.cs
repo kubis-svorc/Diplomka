@@ -13,5 +13,14 @@ namespace Diplomka
 	/// </summary>
 	public partial class App : Application
 	{
-	}
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            DispatcherUnhandledException += (args, e) => 
+            {
+                MessageBox.Show(e.Exception.Message);
+                e.Handled = true;
+            };
+        }
+
+    }
 }

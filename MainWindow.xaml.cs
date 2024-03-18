@@ -7,14 +7,13 @@ using Microsoft.Win32;
 using Diplomka.Analyzators;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Console = System.Diagnostics.Debug;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.IO;
 
 namespace Diplomka
 {
-	public partial class MainWindow : Window
+    public partial class MainWindow : Window
 	{
 		private int _startSubstr, _endSubstr, _caretPos;
 		private bool _isTextBoxFocused;
@@ -24,47 +23,20 @@ namespace Diplomka
 
 		public MainWindow()
 		{
-			InitializeComponent();			
+			InitializeComponent();
 			CodeTab.Text = @"vlakno hlavné
-	opakuj 5 krat
-		hraj c
-		c = 5
-		ak  c > 12
-			c = c - 1
-		koniec
-	koniec
-	
-	a = 12
-	ak a = 3
-		opakuj a krat
-			hraj g
-		koniec
-	koniec
-	inak
-		hraj e
-	koniec
 
-	urob prvypodprogram
-		opakuj 3 krat
-		koniec
-		b = 5
-		ak b < 5
-			b = b -1
-		koniec
-		inak 
-			b = b + 1
-		koniec
-	koniec
-	prvypodprogram
 koniec".ToLower();
-			 _cancelTokenSource = new CancellationTokenSource();
+			_cancelTokenSource = new CancellationTokenSource();
 			_isTextBoxFocused = true;
 			CodeTab.Focus();
+			VirtualMachine.Print = PrintInfo; 
 		}
 
-		public static void PrintInfo(string message)
+		public void PrintInfo(string message)
 		{
-			MessageBox.Show(message, "Info", MessageBoxButton.OK);
+			//ErrorTab.Text += message + Environment.NewLine;
+			ErrorTab.Items.Add(new ListViewItem() { Content = message });
 		}
 
 		public override void EndInit()
@@ -92,7 +64,7 @@ koniec".ToLower();
 		private void OnNovyClick(object sender, RoutedEventArgs e)
         {
 			CodeTab.Clear();
-			ErrorTab.Clear();
+			ErrorTab.Items.Clear();
 			SuggestionList.ItemsSource = null; //Enumerable.Empty<ItemsControl>();
 			CurrentFilePath = string.Empty;
         }
@@ -118,7 +90,7 @@ koniec".ToLower();
 				}
                 catch (IOException ex)
                 {
-					ErrorTab.AppendText($"Nebolo možné otvoriť súbor: {ex.Message}");
+					ErrorTab.Items.Add(new ListViewItem() { Content = $"Nebolo možné otvoriť súbor: {ex.Message}" });
                 }
 			}
         }
@@ -142,7 +114,8 @@ koniec".ToLower();
 				}
 				catch (Exception ex)
 				{
-					ErrorTab.Text = ex.Message;
+					//ErrorTab.Text = ex.Message;
+					ErrorTab.Items.Add(new ListViewItem() { Content = ex.Message });
 					ErrorTab.Focus();
 				}
 			}
@@ -166,7 +139,7 @@ koniec".ToLower();
 			}
 			catch (Exception ex)
 			{
-				ErrorTab.Text = ex.Message;
+				ErrorTab.Items.Add(new ListViewItem() { Content = ex.Message });	
 				ErrorTab.Focus();
 			}			
 		}
@@ -177,11 +150,13 @@ koniec".ToLower();
 			try
 			{
 				Syntax syntaxTree = compiler.Parse();
-				return syntaxTree;
+                return syntaxTree;
 			}
 			catch (Exception ex)
 			{
-				ErrorTab.Text = ex.Message;
+				//ErrorTab.Text += "Kompilácia neprebehla úspešne..." + Environment.NewLine;
+				ErrorTab.Items.Add("Chyba pri spúšťaní programu...");
+				ErrorTab.Items.Add(new ListViewItem() { Content = ex.Message });
 				_ = ErrorTab.Focus();
 				return null;
 			}
@@ -211,23 +186,15 @@ koniec".ToLower();
 				return;
 			}
 
-			int from, until;
-
-			for (from = CodeTab.CaretIndex - 1; 0 < from && from < CodeTab.Text.Length && char.IsLetterOrDigit(CodeTab.Text[from]); from--) ;            
-
-			for (until = CodeTab.CaretIndex + 1; 0 < until && until < CodeTab.Text.Length && char.IsLetterOrDigit(CodeTab.Text[until]); until++) ;			
-
-			if (from < 0)
+			int len = CodeTab.Text.Length;
+			var builder = new System.Text.StringBuilder();
+			
+			for (int pos = CodeTab.CaretIndex; pos > 0 && pos <= len - 1 && !char.IsWhiteSpace(CodeTab.Text[pos]); --pos)
 			{
-				from = 0;
+				builder.Insert(0, CodeTab.Text[pos]);
 			}
-
-			if (until > CodeTab.Text.Length)
-			{
-				until = CodeTab.Text.Length;
-			}
-
-			string wordUnderCaret = CodeTab.Text.Substring(from, until - from).Trim();
+			
+			string wordUnderCaret = builder.ToString();
 
 			string[] suggestions = Wrappers
 				.KeywordContainer
@@ -235,9 +202,6 @@ koniec".ToLower();
 				.Where(kw => Regex.IsMatch(kw, wordUnderCaret))
 				.ToArray();
 			SuggestionList.ItemsSource = suggestions;
-			
-			_startSubstr = from;
-			_endSubstr = until;
 		}
 
 		private void CodeTab_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -256,6 +220,25 @@ koniec".ToLower();
 				case Key.RightAlt:
 					IsAltPressed = true;
 					break;
+				case Key.Space:
+					if (!IsCtrlPressed)
+						break;
+					if (!CodeTab.IsFocused)
+					{
+						return;
+					}
+					_isTextBoxFocused = false;
+					_caretPos = CodeTab.CaretIndex;
+					if (!SuggestionList.HasItems)
+					{
+						SuggestionList.Focus();
+						return;
+					}
+					SuggestionList.SelectedIndex = 0;
+					ListViewItem item = SuggestionList.ItemContainerGenerator.ContainerFromIndex(0) as ListViewItem;
+					item.Focus();
+					break;
+
 				default:
 					break;
             }
@@ -269,35 +252,30 @@ koniec".ToLower();
 				case Key.RightShift:
 					IsShiftPressed = false;
 					break;
+
 				case Key.LeftCtrl:
 				case Key.RightCtrl:
 					IsCtrlPressed = false;
 					break;
+
 				case Key.LeftAlt:
 				case Key.RightAlt:
 					IsAltPressed = false;
 					break;
 
 				case Key.F1:
-					if (!CodeTab.IsFocused)
-					{
-						return;
-					}
-					_isTextBoxFocused = false;
-					if (!SuggestionList.HasItems)
-					{
-						SuggestionList.Focus();
-						return;
-					}
-					SuggestionList.SelectedIndex = 0;
-					ListViewItem item = SuggestionList.ItemContainerGenerator.ContainerFromIndex(0) as ListViewItem;
-					item.Focus();
+					OnHelpClick(this, null);
 					break;
 
-				case Key.F5:					
+				case Key.F5:
 					PlayMusic();
 					break;
-				
+
+				case Key.F6:
+					ErrorTab.Items.Refresh();
+					ErrorTab.Focus();					
+					break;
+
 				case Key.H:
 					if (IsCtrlPressed)
                     {
@@ -323,6 +301,7 @@ koniec".ToLower();
 						DecreaseFontSize();
 					}						
 					break;
+
 				case Key.Add:
 					if (IsCtrlPressed)
                     {
@@ -347,7 +326,7 @@ koniec".ToLower();
 			LineNumerator.FontSize++;
 		}
 
-		private void DecreaseFontSize()
+        private void DecreaseFontSize()
         {
 			if (CodeTab.FontSize <= 8)
             {
@@ -396,12 +375,12 @@ koniec".ToLower();
 
 		private void UpdateLineNumerator()
         {
-			var regex = new Regex("\r\n|\n|\r");
+			var regex = new Regex(Environment.NewLine);
 			int lineCount = regex.Matches(CodeTab.Text).Count + 1;
 			LineNumerator.Text = string.Join(Environment.NewLine, Enumerable.Range(1, lineCount).Select(i => i.ToString().PadLeft(3) + "  "));
 		}
 
-		private async void PlayMusic()
+        private async void PlayMusic()
         {
 			if (IsShiftPressed)
 			{
@@ -410,11 +389,12 @@ koniec".ToLower();
 			}
 			try
 			{
-				_cancelTokenSource = new CancellationTokenSource();
+                ErrorTab.Items.Clear();
+                _cancelTokenSource = new CancellationTokenSource();
 				await StartExec(_cancelTokenSource.Token);
 				await VirtualMachine.Play(_cancelTokenSource.Token);
 			}
-			catch (Exception ex)
+			catch (Exception)
 			{
 				CodeTab.IsReadOnly = false;
 			}
@@ -491,24 +471,68 @@ koniec".ToLower();
 			{
 				string selectedValue = SuggestionList.SelectedItem.ToString();
 				string prefix = CodeTab.Text.Substring(0, _startSubstr);
-				string postFix = CodeTab.Text.Substring(_endSubstr);
+				string postFix = CodeTab.Text.Substring(selectedValue.Length);
 				CodeTab.Text = string.Concat(prefix, selectedValue, postFix);
 				_caretPos = prefix.Length + selectedValue.Length;
 				goto FocusCodeTab;
 			}
-			else if (Key.F1 == e.Key) 
+			else if (Key.Escape == e.Key) 
 			{
 				goto FocusCodeTab;
 			}
 			return;
 			
-			FocusCodeTab:
+		FocusCodeTab:
 			_isTextBoxFocused = true;
-			CodeTab.Focus();
 			CodeTab.CaretIndex = _caretPos;
+			CodeTab.Focus();			
 			return;	
         }
-    
-		
+
+        private void ErrorTab_PreviewKeyUp(object sender, KeyEventArgs e)
+        {
+            switch (e.Key)
+            {
+				case Key.Escape:
+				case Key.F6:					
+					CodeTab.Focus();
+					break;
+
+				case Key.Enter:
+				case Key.Space:
+					int index = GetCaretIndexForError(ErrorTab.SelectedItem.ToString());
+					if (-1 != index)
+					{
+						_caretPos = index;
+						CodeTab.CaretIndex = index;
+						CodeTab.Focus();
+					}
+					break;
+                default:
+                    break;
+            }
+        }
+
+		private int GetCaretIndexForError(string row)
+		{
+			Regex regex = new Regex(@"\d+");
+			Match match = regex.Match(row);
+			if (!match.Success)
+			{
+				return -1;
+			}
+			int rowIndex = Convert.ToInt32(match.Value) - 1;
+			regex = new Regex(Environment.NewLine);
+			var matches = regex.Matches(CodeTab.Text);
+			if (!matches.Any())
+			{
+				return -1;
+			}
+			else if (rowIndex >= matches.Count) 
+			{
+				return matches[matches.Count - 1].Index;
+			}
+			return matches[rowIndex].Index;
+		}
     }
 }
