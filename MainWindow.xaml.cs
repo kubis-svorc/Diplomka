@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.IO;
+using System.ComponentModel;
 
 namespace Diplomka
 {
@@ -45,17 +46,31 @@ koniec".ToLower();
 			CodeTab.Focus();
 		}
 
-		private void OnExitClick(object sender, RoutedEventArgs e)
+        protected override void OnClosing(CancelEventArgs e)
+        {
+			Application.Current.Shutdown(0);
+			Environment.Exit(0);
+        }
+
+        private void OnExitClick(object sender, RoutedEventArgs e)
 		{
 			MessageBoxResult result = MessageBox.Show(
-				"Ste si istý, že chcete ukončiť aplikáciu?\r\nNeuložené zmeny môžu byť stratené.",
-				"Ukončiť",
+				"Ste si istý, že chcete ukončiť aplikáciu?\r\n" +
+				"Neuložené zmeny môžu byť stratené.\r\n" +
+				"Stlačte Áno pre uloženie alebo Nie pre návrat do programu.",
+				"Ukončiť aplikáciu",
 				MessageBoxButton.YesNo);
 
 			if (MessageBoxResult.No == result)
             {
 				return;
             }
+
+			if (!string.IsNullOrWhiteSpace(CurrentFilePath)) 
+			{
+
+			}
+
 			Application.Current.MainWindow.Close();
 			Application.Current.Shutdown(0);
 			Environment.Exit(0);

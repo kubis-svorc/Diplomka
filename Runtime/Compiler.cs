@@ -296,9 +296,9 @@
 					{
 						Scan();
 						ifesle._bodyFalse = Parse();
-						Scan();
-					}
-					analyzer.Check(Kind.WORD, "koniec");
+                        analyzer.Check(Kind.WORD, "koniec");
+                        Scan();
+                    }					
 					result.Add(ifesle);
                 }
 
