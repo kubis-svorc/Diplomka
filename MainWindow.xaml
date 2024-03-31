@@ -81,6 +81,7 @@
                              TextChanged="CodeTab_TextChanged"
                              FontSize="10"
                              TextWrapping="Wrap"
+                             LostFocus="CodeTab_LostFocus"
                              />
                 </Grid>
             </ScrollViewer>

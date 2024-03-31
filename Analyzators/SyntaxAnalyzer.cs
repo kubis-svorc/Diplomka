@@ -56,6 +56,8 @@
 		{
 			
 		}
+
+
 	}
 
 	public class Tone : MidiCommand
@@ -80,20 +82,25 @@
 
 	public class Accord : MidiCommand
 	{
+		Const tone1, tone2, tone3, volume, duration;
 
-		private System.Collections.Generic.List<string> _tones;
-		private Const _duration, _volume;
-
-		public Accord(System.Collections.Generic.List<string> tones, Const duration, Const volume)
-		{
-			_tones = tones;
-			_duration = duration;
-			_volume = volume;
-		}
+        public Accord(Const tone1, Const tone2, Const tone3, Const duration, Const volume)
+        {
+			this.tone1 = tone1;
+			this.tone2 = tone2;
+			this.tone3 = tone3;
+			this.duration = duration;
+			this.volume = volume;
+        }
 
         public override void Generate()
         {
-			
+			duration.Generate();
+			volume.Generate();
+			tone3.Generate();
+			tone2.Generate();
+			tone1.Generate();
+			VirtualMachine.Poke((int)Instruction.Accord);
         }
     }
 

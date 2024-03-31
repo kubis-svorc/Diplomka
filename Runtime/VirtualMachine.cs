@@ -17,8 +17,6 @@ namespace Diplomka.Runtime
 		private static OutputDevice OUTDEVICE;
 		private static bool TERMINATED;
 
-		public static Sequence SEQUENCE;
-		public static Track TRACK;
 		public static int CHANNEL = 0;
 		
 		public const int DEFAULT_CHANNEL = 1, DEFAULT_VOLUME = 127, DEFAULT_DURATION = 500;
@@ -30,10 +28,10 @@ namespace Diplomka.Runtime
 		public static IDictionary<string, int> Variables;
 		public static IDictionary<string, Analyzators.Subroutine> Subroutines;
 
-		public static ICollection<MyMusicCommand> Thread1;
-		public static ICollection<MyMusicCommand> Thread2;
-		public static ICollection<MyMusicCommand> Thread3;
-		public static ICollection<MyMusicCommand> Thread4;
+		public static ICollection<IMyMusicCommand> Thread1;
+		public static ICollection<IMyMusicCommand> Thread2;
+		public static ICollection<IMyMusicCommand> Thread3;
+		public static ICollection<IMyMusicCommand> Thread4;
 
 		static VirtualMachine()
 		{
@@ -45,14 +43,11 @@ namespace Diplomka.Runtime
 			Variables = new Dictionary<string, int>();
 			Subroutines = new Dictionary<string, Analyzators.Subroutine>();
 
-			Thread1 = new LinkedList<MyMusicCommand>();
-			Thread2 = new LinkedList<MyMusicCommand>();
-			Thread3 = new LinkedList<MyMusicCommand>();
-			Thread4 = new LinkedList<MyMusicCommand>();
-			TOP = MemoryAllocSize;
-			TRACK = new Track();
-			SEQUENCE = new Sequence();
-			SEQUENCE.Add(TRACK);
+			Thread1 = new LinkedList<IMyMusicCommand>();
+			Thread2 = new LinkedList<IMyMusicCommand>();
+			Thread3 = new LinkedList<IMyMusicCommand>();
+			Thread4 = new LinkedList<IMyMusicCommand>();
+			TOP = MemoryAllocSize;			
 		}
 
 		public static void Reset()
@@ -91,7 +86,24 @@ namespace Diplomka.Runtime
 					TOP++;
 					int duration = MEM[TOP];
 					TOP++;
-					SetTone(tone, duration, volume);
+					SetTonePlay(tone, duration, volume);
+					SetToneStop(tone, duration);
+					break;
+
+				case (int)Instruction.Accord:
+					PC++;
+					int tone1 = MEM[TOP];
+					TOP++;
+					int tone2 = MEM[TOP];
+					TOP++;
+					int tone3 = MEM[TOP];
+					TOP++;
+					volume = MEM[TOP];
+					TOP++;
+					duration = MEM[TOP];
+					TOP++;
+					SetAccordPlay(tone1, tone2, tone3, duration, volume);
+					SetAccordStop(tone1, tone2, tone3, duration);
 					break;
 
 				case (int)Instruction.Insturment:
@@ -280,147 +292,71 @@ namespace Diplomka.Runtime
 		public static void SetInstrument(int instrumentCode)
         {
 			ChannelMessage message = new ChannelMessage(ChannelCommand.ProgramChange, CHANNEL, instrumentCode, 0);
-			MyMusicCommand command = new MyMusicCommand(message, 0);
+            IMyMusicCommand command = new MyToneCommand(message, 0);
 			StoreCommand(command);			
 		}
 
-		public static void SetTone(int tone, int duration, int volume)
+		public static void SetTonePlay(int tone, int duration, int volume)
         {
 			ChannelMessage message = new ChannelMessage(ChannelCommand.NoteOn, CHANNEL, tone, volume);
-			MyMusicCommand command = new MyMusicCommand(message, duration);
-			StoreCommand(command);
-			message = new ChannelMessage(ChannelCommand.NoteOff, message.MidiChannel, tone, 0);
-			command = new MyMusicCommand(message, duration);
+            IMyMusicCommand command = new MyToneCommand(message, duration);
 			StoreCommand(command);
 		}
 
-		public static void SetPause(int duration)
+		public static void SetToneStop(int tone, int duration) 
+		{
+			ChannelMessage message = new ChannelMessage(ChannelCommand.NoteOff, CHANNEL, tone, 0);
+            IMyMusicCommand command = new MyToneCommand(message, duration);
+			StoreCommand(command);
+		}
+
+        public static void SetAccordPlay(int tone1, int tone2, int tone3, int duration, int volume)
+		{
+            ChannelMessage[] messages =
+            {
+                new (ChannelCommand.NoteOn, CHANNEL, tone1, volume),
+                new (ChannelCommand.NoteOn, CHANNEL, tone2, volume),
+                new (ChannelCommand.NoteOn, CHANNEL, tone3, volume),
+            };
+            IMyMusicCommand command = new MyAccordCommand(messages, duration);
+            StoreCommand(command);
+        }
+
+        public static void SetAccordStop(int tone1, int tone2, int tone3, int duration)
         {
-			MyMusicCommand myMusic = new MyMusicCommand(new ChannelMessage(ChannelCommand.NoteOn, CHANNEL, 0), duration);
+            ChannelMessage[] messages =
+			{
+				new (ChannelCommand.NoteOff, CHANNEL, tone1, 0),
+				new (ChannelCommand.NoteOff, CHANNEL, tone2, 0),
+				new (ChannelCommand.NoteOff, CHANNEL, tone3, 0),
+			};
+            IMyMusicCommand command = new MyAccordCommand(messages, duration);
+            StoreCommand(command);
+        }
+
+        public static void SetPause(int duration)
+        {
+			MyToneCommand myMusic = new MyToneCommand(new ChannelMessage(ChannelCommand.NoteOn, CHANNEL, 0), duration);
 			StoreCommand(myMusic);
 			
-			myMusic = new MyMusicCommand(new ChannelMessage(ChannelCommand.NoteOff, CHANNEL, 0), duration);
+			myMusic = new MyToneCommand(new ChannelMessage(ChannelCommand.NoteOff, CHANNEL, 0), duration);
 			StoreCommand(myMusic);
 		}
 
 		public static void SetVolume(int volume)
         {
 			ChannelMessage message = new ChannelMessage(ChannelCommand.Controller, CHANNEL, (int)ControllerType.Volume, volume);
-			MyMusicCommand command = new MyMusicCommand(message, 0);
+			MyToneCommand command = new MyToneCommand(message, 0);
 			StoreCommand(command);
         }
 
 		public static async Task Play(CancellationToken cancellationToken)
 		{
-			var thread1 = Task.Run(async () => 
-			{
-                foreach (MyMusicCommand cmd in Thread1)
-                {
-					if (cancellationToken.IsCancellationRequested)
-                    {
-						cmd.command = new ChannelMessage(ChannelCommand.NoteOff, cmd.command.MidiChannel, cmd.command.Data1, cmd.command.Data2);
-						OUTDEVICE.Send(cmd.command);
-						break;
-					}
-                    int delayTime = 0, delayInterval = 200, remainingDelay = cmd.duration;
-					OUTDEVICE.Send(cmd.command);
-                    #region Delay calc
-                    while (remainingDelay > 0)
-                    {
-						delayTime = Math.Min(remainingDelay, delayInterval);
-						await Task.Delay(delayTime);
-						remainingDelay -= delayTime;
-						if (cancellationToken.IsCancellationRequested)
-						{
-							remainingDelay = -1;
-						}
-					}
-                    #endregion
-                }
-            });
-
-            var thread2 = Task.Run(async () =>
-            {
-                foreach (MyMusicCommand cmd in Thread2)
-                {
-					if (cancellationToken.IsCancellationRequested)
-					{
-						cmd.command = new ChannelMessage(ChannelCommand.NoteOff, cmd.command.MidiChannel, cmd.command.Data1, cmd.command.Data2);
-						OUTDEVICE.Send(cmd.command);
-						break;
-					}
-                    int delayTime = 0, delayInterval = 200, remainingDelay = cmd.duration;
-					OUTDEVICE.Send(cmd.command);
-                    #region Delay calc
-                    while (remainingDelay > 0)
-					{
-						delayTime = Math.Min(remainingDelay, delayInterval);
-						await Task.Delay(delayTime);
-						remainingDelay -= delayTime;
-						if (cancellationToken.IsCancellationRequested)
-						{
-							remainingDelay = -1;
-						}
-					}
-                    #endregion
-                }
-            });
-
-            var thread3 = Task.Run(async () =>
-            {
-				foreach (MyMusicCommand cmd in Thread3)
-				{
-					if (cancellationToken.IsCancellationRequested)
-					{
-						cmd.command = new ChannelMessage(ChannelCommand.NoteOff, cmd.command.MidiChannel, cmd.command.Data1, cmd.command.Data2);
-						OUTDEVICE.Send(cmd.command);
-						break;
-					}
-                    int delayTime = 0, delayInterval = 200, remainingDelay = cmd.duration;
-					OUTDEVICE.Send(cmd.command);
-                    #region Delay calc
-                    while (remainingDelay > 0)
-					{
-						delayTime = Math.Min(remainingDelay, delayInterval);
-						await Task.Delay(delayTime);
-						remainingDelay -= delayTime;
-						if (cancellationToken.IsCancellationRequested)
-						{
-							remainingDelay = -1;
-						}
-					}
-                    #endregion
-                }
-            });
-
-            var thread4 = Task.Run(async () =>
-            {
-				foreach (MyMusicCommand cmd in Thread4)
-				{
-					if (cancellationToken.IsCancellationRequested)
-					{
-						cmd.command = new ChannelMessage(ChannelCommand.NoteOff, cmd.command.MidiChannel, cmd.command.Data1, cmd.command.Data2);
-						OUTDEVICE.Send(cmd.command);
-						break;
-					}
-                    int delayTime = 0, delayInterval = 200, remainingDelay = cmd.duration;
-					OUTDEVICE.Send(cmd.command);
-                    #region Delay calc
-                    while (remainingDelay > 0)
-					{
-						delayTime = Math.Min(remainingDelay, delayInterval);
-						await Task.Delay(delayTime);
-						remainingDelay -= delayTime;
-						if (cancellationToken.IsCancellationRequested)
-						{
-							remainingDelay = -1;
-						}
-					}
-                    #endregion
-                }
-            });
-
-            await Task.WhenAll(new[] { thread1, thread2, thread3, thread4 });
+			var thread1 = Task.Run(() => PlayFunction(Thread1, cancellationToken), cancellationToken);
+			var thread2 = Task.Run(() => PlayFunction(Thread2, cancellationToken), cancellationToken);
+			var thread3 = Task.Run(() => PlayFunction(Thread3, cancellationToken), cancellationToken);
+			var thread4 = Task.Run(() => PlayFunction(Thread4, cancellationToken), cancellationToken);
+			await Task.WhenAll(new[] { thread1, thread2 });
 		}
 		
 		public static void SetJumpToProgramBody()
@@ -446,7 +382,7 @@ namespace Diplomka.Runtime
 			Thread4.Clear();
         }
 
-		private static void StoreCommand(MyMusicCommand command)
+		private static void StoreCommand(IMyMusicCommand command)
         {
 			switch (CHANNEL)
 			{
@@ -480,44 +416,162 @@ namespace Diplomka.Runtime
 		{
 			Sequence seq = new Sequence();
 			Track track = new Track();
-
 			int ticks, timepos = 0;
+
 			foreach (var msg in Thread1)
+			{
+                timepos += msg.Duration;
+                ticks = (int)(timepos * seq.Division / 500F);
+                switch (msg)
+				{
+					case MyToneCommand cmd:
+                        track.Insert(ticks, cmd.command);
+                        break;
+
+					case MyAccordCommand acc:
+						for (int i = 0; i < 3; i++)
+						{
+							track.Insert(ticks, acc.commands[i]);
+						}
+                        break;
+				}
+			}
+
+            timepos = 0;
+            foreach (var msg in Thread2)
             {
-				timepos += msg.duration;
-				ticks = (int)(timepos * seq.Division / 500F);
-				track.Insert(ticks, msg.command);
+                timepos += msg.Duration;
+                ticks = (int)(timepos * seq.Division / 500F);
+                switch (msg)
+                {
+                    case MyToneCommand cmd:
+                        track.Insert(ticks, cmd.command);
+                        break;
+
+                    case MyAccordCommand acc:
+                        for (int i = 0; i < 3; i++)
+                        {
+                            track.Insert(ticks, acc.commands[i]);
+                        }
+                        break;
+                }
             }
-			timepos = 0;
-			foreach (var msg in Thread2)
-			{
-				timepos += msg.duration;
-				ticks = (int)(timepos * seq.Division / 500F);
-				track.Insert(ticks, msg.command);
-			}
-			timepos = 0;
-			foreach (var msg in Thread3)
-			{
-				timepos += msg.duration;
-				ticks = (int)(timepos * seq.Division / 500F);
-				track.Insert(ticks, msg.command);
-			}
-			timepos = 0;
-			foreach (var msg in Thread4)
-			{
-				timepos += msg.duration;
-				ticks = (int)(timepos * seq.Division / 500F);
-				track.Insert(ticks, msg.command);
-			}
-			try 
+
+            timepos = 0;
+            foreach (var msg in Thread3)
+            {
+                timepos += msg.Duration;
+                ticks = (int)(timepos * seq.Division / 500F);
+                switch (msg)
+                {
+                    case MyToneCommand cmd:
+                        track.Insert(ticks, cmd.command);
+                        break;
+
+                    case MyAccordCommand acc:
+                        for (int i = 0; i < 3; i++)
+                        {
+                            track.Insert(ticks, acc.commands[i]);
+                        }
+                        break;
+                }
+            }
+
+            timepos = 0;
+            foreach (var msg in Thread4)
+            {
+                timepos += msg.Duration;
+                ticks = (int)(timepos * seq.Division / 500F);
+                switch (msg)
+                {
+                    case MyToneCommand cmd:
+                        track.Insert(ticks, cmd.command);
+                        break;
+
+                    case MyAccordCommand acc:
+                        for (int i = 0; i < 3; i++)
+                        {
+                            track.Insert(ticks, acc.commands[i]);
+                        }
+                        break;
+                }
+            }
+
+			try
 			{
 				seq.Add(track);
 				seq.Save(path);
 			}
-            catch
-            {
+			catch (Exception ex)
+			{
+				Print("Nastala chyba pri ukladaní MIDI súboru: " + ex.Message);
+			}
+		}
 
+		private static async Task PlayFunction(IEnumerable<IMyMusicCommand> commands, CancellationToken cancellationToken) 
+		{
+            foreach (IMyMusicCommand command in commands)
+            {
+                switch (command)
+                {
+                    case MyToneCommand cmd:
+                        if (cancellationToken.IsCancellationRequested)
+                        {
+                            cmd.command = new ChannelMessage(ChannelCommand.NoteOff, cmd.command.MidiChannel, cmd.command.Data1, cmd.command.Data2);
+                            OUTDEVICE.Send(cmd.command);
+                            break;
+                        }
+                        int delayTime = 0, delayInterval = 200, remainingDelay = cmd.Duration;
+                        OUTDEVICE.Send(cmd.command);
+                        #region Delay calc
+                        while (remainingDelay > 0)
+                        {
+                            delayTime = Math.Min(remainingDelay, delayInterval);
+                            await Task.Delay(delayTime);
+                            remainingDelay -= delayTime;
+                            if (cancellationToken.IsCancellationRequested)
+                            {
+                                remainingDelay = -1;
+                            }
+                        }
+                        #endregion
+                        break;
+
+                    case MyAccordCommand acc:
+                        if (cancellationToken.IsCancellationRequested)
+                        {
+                            acc.commands = new[]
+                            {
+								new ChannelMessage(ChannelCommand.NoteOff, acc.commands[0].MidiChannel, acc.commands[0].Data1, acc.commands[0].Data2),
+								new ChannelMessage(ChannelCommand.NoteOff, acc.commands[1].MidiChannel, acc.commands[1].Data1, acc.commands[1].Data2),
+								new ChannelMessage(ChannelCommand.NoteOff, acc.commands[2].MidiChannel, acc.commands[2].Data1, acc.commands[2].Data2)
+							};
+                            foreach (var cmd in acc.commands)
+                            {
+                                OUTDEVICE.Send(cmd);
+                            }
+                            break;
+                        }
+                        delayTime = 0; delayInterval = 200; remainingDelay = acc.Duration;
+                        foreach (var cmd in acc.commands)
+                        {
+                            OUTDEVICE.Send(cmd);
+                        }
+                        #region Delay calc
+                        while (remainingDelay > 0)
+                        {
+                            delayTime = Math.Min(remainingDelay, delayInterval);
+                            await Task.Delay(delayTime);
+                            remainingDelay -= delayTime;
+                            if (cancellationToken.IsCancellationRequested)
+                            {
+                                remainingDelay = -1;
+                            }
+                        }
+                        #endregion
+                        break;
+                }
             }
-		} 
+        }
 	}
 }

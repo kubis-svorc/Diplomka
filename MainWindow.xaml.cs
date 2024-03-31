@@ -11,6 +11,9 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.IO;
 using System.ComponentModel;
+using System.Windows.Automation;
+using System.Collections.Generic;
+using System.ComponentModel.Design;
 
 namespace Diplomka
 {
@@ -25,9 +28,7 @@ namespace Diplomka
 		public MainWindow()
 		{
 			InitializeComponent();
-			CodeTab.Text = @"vlakno hlavné
-
-koniec".ToLower();
+			CodeTab.Text = "vlakno hlavné\r\n\r\nkoniec";
 			_cancelTokenSource = new CancellationTokenSource();
 			_isTextBoxFocused = true;
 			CodeTab.Focus();
@@ -134,6 +135,7 @@ koniec".ToLower();
 					ErrorTab.Focus();
 				}
 			}
+			IsShiftPressed = false;
 		}
 
 		private void OnSave(object sender, RoutedEventArgs e)
@@ -193,6 +195,39 @@ koniec".ToLower();
 			VirtualMachine.Start();
 			CodeTab.IsReadOnly = false;
 		}
+
+		private void FillSpacesForNVDA() 
+		{
+            int indexCaret = CodeTab.CaretIndex;
+            string replacedText = Regex.Replace(CodeTab.Text, @"(?<! )\r\n", " \r\n");
+            if (replacedText != CodeTab.Text)
+            {
+                CodeTab.Text = replacedText;
+                CodeTab.CaretIndex = indexCaret;
+            }
+        }
+
+        private void UpdateSuggestionList() 
+		{
+            var builder = new System.Text.StringBuilder();
+			int i = CodeTab.CaretIndex - 1;
+			while (i >= 0 && !char.IsWhiteSpace(CodeTab.Text[i])) 
+			{
+				builder.Insert(0, CodeTab.Text[i]);
+				i--;
+			}
+            string wordUnderCaret = builder.ToString();
+			if (wordUnderCaret.Length < 2) 
+			{
+				wordUnderCaret = string.Empty;
+			}
+            string[] suggestions = Wrappers
+                .KeywordContainer
+                .Keywords
+                .Where(kw => Regex.IsMatch(kw, wordUnderCaret))
+                .ToArray();
+            SuggestionList.ItemsSource = suggestions;
+        }
 		
 		private void CodeTab_KeyUp(object sender, KeyEventArgs e)
 		{
@@ -200,23 +235,8 @@ koniec".ToLower();
 			{
 				return;
 			}
-
-			int len = CodeTab.Text.Length;
-			var builder = new System.Text.StringBuilder();
-			
-			for (int pos = CodeTab.CaretIndex; pos > 0 && pos <= len - 1 && !char.IsWhiteSpace(CodeTab.Text[pos]); --pos)
-			{
-				builder.Insert(0, CodeTab.Text[pos]);
-			}
-			
-			string wordUnderCaret = builder.ToString();
-
-			string[] suggestions = Wrappers
-				.KeywordContainer
-				.Keywords
-				.Where(kw => Regex.IsMatch(kw, wordUnderCaret))
-				.ToArray();
-			SuggestionList.ItemsSource = suggestions;
+			FillSpacesForNVDA();
+			UpdateSuggestionList();            
 		}
 
 		private void CodeTab_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -306,7 +326,14 @@ koniec".ToLower();
 								break;
                             }
                         }
+						AutomationProperties.SetName(CodeTab, string.Empty);
 						CodeTab.CaretIndex = FindNextHeading(CodeTab.Text, wordStartIndex);
+						int row = CodeTab.GetLineIndexFromCharacterIndex(CodeTab.CaretIndex);
+						string name = CodeTab.GetLineText(row);
+						Focus();
+						CodeTab.Focus();
+						Keyboard.Focus(CodeTab);
+						AutomationProperties.SetName(CodeTab, name);
                     }
 					break;
 
@@ -328,8 +355,8 @@ koniec".ToLower();
 					break;
             }
 		}
-
-        private void IncreaseFontSize()
+		
+		private void IncreaseFontSize()
         {
 			if (CodeTab.FontSize >= 20)
             {
@@ -424,7 +451,12 @@ koniec".ToLower();
 			window.ShowDialog();
         }
 
-		private void OnPlayClick(object sender, RoutedEventArgs e)
+        private void CodeTab_LostFocus(object sender, RoutedEventArgs e)
+        {
+			AutomationProperties.SetName(CodeTab, "Kód");
+        }
+
+        private void OnPlayClick(object sender, RoutedEventArgs e)
 		{
 			PlayMusic();
 		}

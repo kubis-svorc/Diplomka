@@ -17,6 +17,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Becicka.xaml.cs" />
+    <Compile Remove="XAML_NOVY.xaml.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="testovaci_subor2.midi" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Remove="Becicka.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="Diplomka.sln" />
   </ItemGroup>
 

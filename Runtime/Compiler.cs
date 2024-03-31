@@ -2,6 +2,7 @@
 {
     using Sanford.Multimedia.Midi;
 	using Diplomka.Analyzators;
+    using System.DirectoryServices.ActiveDirectory;
 
     public class Compiler
     {
@@ -81,8 +82,8 @@
 				case "c":
 					code = (int)Tone.C;
 					break;
-				case "c1k":
-				case "d1b":
+				case "ck1":
+				case "db1":
                 case "ck":
                 case "db":
                     code = (int)Tone.Cis;
@@ -91,26 +92,26 @@
 				case "d":
 					code = (int)Tone.D;
 					break;
-				case "d1k":
-				case "e1b":
+				case "dk1":
+				case "eb1":
                 case "dk":
                 case "eb":
                     code = (int)Tone.Dis;
 					break;
 				case "e1":
-				case "f1b":
+				case "fb1":
                 case "e":
                 case "fb":
                     code = (int)Tone.E;
 					break;
-				case "e1k":
+				case "ek1":
 				case "f1":
                 case "ek":
                 case "f":
                     code = (int)Tone.F;
 					break;
-				case "f1k":
-				case "g1b":
+				case "fk1":
+				case "gb1":
                 case "fk":
                 case "gb":
                     code = (int)Tone.Fis;
@@ -119,8 +120,8 @@
 				case "g":
 					code = (int)Tone.G;
 					break;
-				case "g1k":
-				case "a1b":
+				case "gk1":
+				case "ab1":
                 case "gk":
                 case "ab":
                     code = (int)Tone.Gis;
@@ -129,14 +130,14 @@
 				case "a":
 					code = (int)Tone.A;
 					break;
-				case "a1k":
+				case "ak1":
 				case "b1":
                 case "ak":
                 case "b":
                     code = (int)Tone.B;
 					break;
 				case "h1":
-				case "c1b":
+				case "cb1":
                 case "h":
                 case "cb":
                     code = (int)Tone.H;
@@ -144,45 +145,45 @@
 				case "c2":
 					code = (int)Tone.C2;
 					break;
-				case "c2k":
-				case "d2b":
+				case "ck2":
+				case "db2":
 					code = (int)Tone.Cis2;
 					break;
 				case "d2":
 					code = (int)Tone.D2;
 					break;
-				case "d2k":
-				case "e2b":
+				case "dk2":
+				case "eb2":
 					code = (int)Tone.Dis2;
 					break;
 				case "e2":
-				case "f2b":
+				case "fb2":
 					code = (int)Tone.E2;
 					break;
-				case "e2k":
+				case "ek2":
 				case "f2":
 					code = (int)Tone.F2;
 					break;
-				case "f2k":
-				case "g2b":
+				case "fk2":
+				case "gb2":
 					code = (int)Tone.Fis2;
 					break;
 				case "g2":
 					code = (int)Tone.G2;
 					break;
-				case "g2k":
-				case "a2b":
+				case "gk2":
+				case "ab2":
 					code = (int)Tone.Gis2;
 					break;
 				case "a2":
 					code = (int)Tone.A2;
 					break;
-				case "a2k":
+				case "ak2":
 				case "b2":
 					code = (int)Tone.B2;
 					break;
 				case "h2":
-				case "c2b":
+				case "cb2":
 					code = (int)Tone.H2;
 					break;
 				case "c3":
@@ -258,6 +259,58 @@
 					}
 					result.Add(new Analyzators.Tone(new Const(toneCode), new Const(duration), new Const(volume)));
 				}
+
+				else if ("akord" == keyword)
+				{
+                    Scan(); //preskoc akord
+					string ton;
+					int[] tc = { 0, 0, 0 };
+					for (int i = 0; i < 3; i++) 
+					{
+						ton = analyzer.ToString();
+                        Scan();
+                        if (Kind.NUMBER == analyzer.kind)   // c2, c3, c1, ...
+                        {
+                            ton += analyzer.ToString();
+                            Scan();
+                        }
+						tc[i] = GetToneCode(ton);
+                    } 
+                    
+                    string parameters = analyzer.ToString();
+
+                    int duration = VirtualMachine.DEFAULT_DURATION,
+                        volume = VirtualMachine.DEFAULT_VOLUME,
+                        direction = 0;
+
+                    while (parameters.IndexOf(":") > -1)
+                    {
+                        if ("h:" == parameters)
+                        {
+                            Scan();  //preskoc h:
+                            analyzer.Check(Kind.NUMBER);
+                            volume = System.Convert.ToInt32(analyzer.ToString());
+                            Scan(); // preskoc cislo
+                        }
+                        else if ("s:" == parameters)
+                        {
+                            Scan();  //preskoc s:
+                            analyzer.Check(Kind.NUMBER);
+                            direction = System.Convert.ToInt32(analyzer.ToString());
+                            Scan(); // preskoc cislo
+                        }
+                        else if ("d:" == parameters)
+                        {
+                            Scan();  //preskoc d:
+                            analyzer.Check(Kind.NUMBER);
+                            duration = System.Convert.ToInt32(analyzer.ToString());
+                            Scan(); // preskoc cislo
+                        }
+                        parameters = analyzer.ToString();
+                    }
+
+                    result.Add(new Accord(new Const(tc[0]), new Const(tc[1]), new Const(tc[2]), new Const(duration), new Const(volume)));
+                }
 
 				else if ("opakuj" == keyword)
 				{
