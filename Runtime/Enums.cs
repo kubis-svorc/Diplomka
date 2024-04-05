@@ -40,7 +40,8 @@
 		Call = 26,
 		Return = 27,
 		Thrd = 28,
-		Pause = 29
+		Pause = 29,
+		RandomTone = 30
 	}
 
 	public enum Tone

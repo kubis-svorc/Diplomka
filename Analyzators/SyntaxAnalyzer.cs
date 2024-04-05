@@ -82,28 +82,54 @@
 
 	public class Accord : MidiCommand
 	{
-		Const tone1, tone2, tone3, volume, duration;
+		private Const[] _tones;
+		private Const _volume, _duration;
 
-        public Accord(Const tone1, Const tone2, Const tone3, Const duration, Const volume)
+        public Accord(Const[] tones, Const duration, Const volume)
         {
-			this.tone1 = tone1;
-			this.tone2 = tone2;
-			this.tone3 = tone3;
-			this.duration = duration;
-			this.volume = volume;
+			_tones = tones;
+			_duration = duration;
+			_volume = volume;
         }
 
         public override void Generate()
         {
-			duration.Generate();
-			volume.Generate();
-			tone3.Generate();
-			tone2.Generate();
-			tone1.Generate();
+			_duration.Generate();
+			_volume.Generate();
+			int count = 0;
+			foreach (var tone in _tones)
+			{
+				if (tone is null)
+				{
+					break;
+                }
+                tone.Generate();
+				count++;
+            }
+			VirtualMachine.Poke((int)Instruction.Push);
+			VirtualMachine.Poke(count);
 			VirtualMachine.Poke((int)Instruction.Accord);
         }
     }
 
+	public class RandomTone : MidiCommand
+	{
+		private int _vol, _dur;
+        
+		public RandomTone(int volume, int duration) 
+        {
+			_vol = volume;
+			_dur = duration;
+        }
+
+        public override void Generate()
+        {
+			VirtualMachine.Poke((int)Instruction.RandomTone);
+			VirtualMachine.Poke(_vol);
+			VirtualMachine.Poke(_dur);
+        }
+    }
+	
 	public class Instrument : MidiCommand
 	{
 		private Syntax _instrumentCode;

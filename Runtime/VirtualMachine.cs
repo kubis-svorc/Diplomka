@@ -10,7 +10,7 @@ namespace Diplomka.Runtime
 {
     public class VirtualMachine : IDisposable
 	{
-		private const int DEVICE_ID = 0, MemoryAllocSize = 0x10000; // memory alloc
+		private const int DEVICE_ID = 0, MemoryAllocSize = 50;//0x10000; // memory alloc
 		public delegate void PrinterFunc(string msg);
 		public static PrinterFunc Print;
 
@@ -92,18 +92,21 @@ namespace Diplomka.Runtime
 
 				case (int)Instruction.Accord:
 					PC++;
-					int tone1 = MEM[TOP];
+					int count = MEM[TOP];
 					TOP++;
-					int tone2 = MEM[TOP];
-					TOP++;
-					int tone3 = MEM[TOP];
-					TOP++;
+
+                    int[] tones = new int[count];
+					for (int i = 0; i < count; i++)
+					{
+						tones[i] = MEM[TOP];
+						TOP++;
+					}
 					volume = MEM[TOP];
 					TOP++;
 					duration = MEM[TOP];
 					TOP++;
-					SetAccordPlay(tone1, tone2, tone3, duration, volume);
-					SetAccordStop(tone1, tone2, tone3, duration);
+					SetAccordPlay(tones, duration, volume);
+					SetAccordStop(tones, duration);
 					break;
 
 				case (int)Instruction.Insturment:
@@ -135,6 +138,19 @@ namespace Diplomka.Runtime
 					PC++;
 					TOP--;
 					MEM[TOP] = new Random().Next(min, max);
+					break;
+
+				case (int)Instruction.RandomTone:
+					PC++;
+					volume = MEM[PC];
+					PC++;
+					duration = MEM[PC];
+					PC++;
+					tone = new Random().Next(60, 85);
+                    SetTonePlay(tone, duration, volume);
+					SetToneStop(tone, duration);
+					//TOP--;
+					//MEM[TOP] = new Random().Next(60, 85);
 					break;
 
 				case (int)Instruction.Push:
@@ -310,26 +326,24 @@ namespace Diplomka.Runtime
 			StoreCommand(command);
 		}
 
-        public static void SetAccordPlay(int tone1, int tone2, int tone3, int duration, int volume)
+        public static void SetAccordPlay(int[] tones, int duration, int volume)
 		{
-            ChannelMessage[] messages =
+			ChannelMessage[] messages = new ChannelMessage[tones.Length];
+			for(int i = 0; i < messages.Length; i++)
             {
-                new (ChannelCommand.NoteOn, CHANNEL, tone1, volume),
-                new (ChannelCommand.NoteOn, CHANNEL, tone2, volume),
-                new (ChannelCommand.NoteOn, CHANNEL, tone3, volume),
-            };
+				messages[i] = new(ChannelCommand.NoteOn, CHANNEL, tones[i], volume);
+            }
             IMyMusicCommand command = new MyAccordCommand(messages, duration);
             StoreCommand(command);
         }
 
-        public static void SetAccordStop(int tone1, int tone2, int tone3, int duration)
+        public static void SetAccordStop(int[] tones, int duration)
         {
-            ChannelMessage[] messages =
-			{
-				new (ChannelCommand.NoteOff, CHANNEL, tone1, 0),
-				new (ChannelCommand.NoteOff, CHANNEL, tone2, 0),
-				new (ChannelCommand.NoteOff, CHANNEL, tone3, 0),
-			};
+            ChannelMessage[] messages = new ChannelMessage[tones.Length];
+            for (int i = 0; i < messages.Length; i++)
+            {
+                messages[i] = new(ChannelCommand.NoteOff, CHANNEL, tones[i], 0);
+            }
             IMyMusicCommand command = new MyAccordCommand(messages, duration);
             StoreCommand(command);
         }
@@ -356,7 +370,7 @@ namespace Diplomka.Runtime
 			var thread2 = Task.Run(() => PlayFunction(Thread2, cancellationToken), cancellationToken);
 			var thread3 = Task.Run(() => PlayFunction(Thread3, cancellationToken), cancellationToken);
 			var thread4 = Task.Run(() => PlayFunction(Thread4, cancellationToken), cancellationToken);
-			await Task.WhenAll(new[] { thread1, thread2 });
+			await Task.WhenAll(new[] { thread1, thread2, thread3, thread4 });
 		}
 		
 		public static void SetJumpToProgramBody()
@@ -429,7 +443,7 @@ namespace Diplomka.Runtime
                         break;
 
 					case MyAccordCommand acc:
-						for (int i = 0; i < 3; i++)
+						for (int i = 0; i < acc.commands.Length; i++)
 						{
 							track.Insert(ticks, acc.commands[i]);
 						}
@@ -540,12 +554,13 @@ namespace Diplomka.Runtime
                     case MyAccordCommand acc:
                         if (cancellationToken.IsCancellationRequested)
                         {
-                            acc.commands = new[]
-                            {
-								new ChannelMessage(ChannelCommand.NoteOff, acc.commands[0].MidiChannel, acc.commands[0].Data1, acc.commands[0].Data2),
-								new ChannelMessage(ChannelCommand.NoteOff, acc.commands[1].MidiChannel, acc.commands[1].Data1, acc.commands[1].Data2),
-								new ChannelMessage(ChannelCommand.NoteOff, acc.commands[2].MidiChannel, acc.commands[2].Data1, acc.commands[2].Data2)
-							};
+							int count = acc.commands.Length;
+							acc.commands = new ChannelMessage[count];
+							for (int i = 0; i < count; i++)
+							{
+								acc.commands[i] = new ChannelMessage(ChannelCommand.NoteOff, acc.commands[0].MidiChannel, acc.commands[0].Data1, acc.commands[0].Data2);
+
+                            }
                             foreach (var cmd in acc.commands)
                             {
                                 OUTDEVICE.Send(cmd);

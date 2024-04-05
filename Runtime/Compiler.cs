@@ -3,13 +3,14 @@
     using Sanford.Multimedia.Midi;
 	using Diplomka.Analyzators;
     using System.DirectoryServices.ActiveDirectory;
+    using System.Windows;
 
     public class Compiler
     {
         private LexicalAnalyzer analyzer;
         private delegate void Scanner();    // to use shortcut Scan() for analyzer.Scan()
         private delegate void Poker(int i); // to use shortcut Poke(code) for VirtualMachine.Poke(code)
-		private Scanner Scan;	// procedure reference
+		private Scanner Scan;				// procedure reference
 		
 		public Compiler()
         {
@@ -191,7 +192,7 @@
 					break;
 				default:
 					code = 0;
-					break;
+					throw new Exceptions.SyntaxException($"Chyba v riadku {analyzer.row} : Neznámy tón {tone}");
 			}
 			return code;
 		}
@@ -264,19 +265,21 @@
 				{
                     Scan(); //preskoc akord
 					string ton;
-					int[] tc = { 0, 0, 0 };
-					for (int i = 0; i < 3; i++) 
+					Const[] tones = new Const[4] { null, null, null, null };
+					int i = 0, toneCode;
+					while (analyzer.look != '\n' && analyzer.look != '\0' && i < 4 && analyzer.token[analyzer.token.Length - 1] != ':')
 					{
-						ton = analyzer.ToString();
+                        ton = analyzer.ToString();
                         Scan();
                         if (Kind.NUMBER == analyzer.kind)   // c2, c3, c1, ...
                         {
                             ton += analyzer.ToString();
                             Scan();
                         }
-						tc[i] = GetToneCode(ton);
-                    } 
-                    
+                        toneCode = GetToneCode(ton);
+						tones[i] = new Const(toneCode);
+                        ++i;
+					}
                     string parameters = analyzer.ToString();
 
                     int duration = VirtualMachine.DEFAULT_DURATION,
@@ -292,13 +295,6 @@
                             volume = System.Convert.ToInt32(analyzer.ToString());
                             Scan(); // preskoc cislo
                         }
-                        else if ("s:" == parameters)
-                        {
-                            Scan();  //preskoc s:
-                            analyzer.Check(Kind.NUMBER);
-                            direction = System.Convert.ToInt32(analyzer.ToString());
-                            Scan(); // preskoc cislo
-                        }
                         else if ("d:" == parameters)
                         {
                             Scan();  //preskoc d:
@@ -309,7 +305,8 @@
                         parameters = analyzer.ToString();
                     }
 
-                    result.Add(new Accord(new Const(tc[0]), new Const(tc[1]), new Const(tc[2]), new Const(duration), new Const(volume)));
+                    
+					result.Add(new Accord(tones, new Const(duration), new Const(volume)));
                 }
 
 				else if ("opakuj" == keyword)
@@ -404,6 +401,33 @@
 					result.Add(randomConst);
                 }
 
+				else if ("nahodny" == keyword) 
+				{
+					Scan();
+					string pars = analyzer.ToString();
+					int volume = 100, duration = 250;
+                    while (pars.IndexOf(":") > -1)
+                    {
+                        if ("h:" == pars)
+                        {
+                            Scan();  //preskoc h:
+                            analyzer.Check(Kind.NUMBER);
+                            volume = System.Convert.ToInt32(analyzer.ToString());
+                            Scan(); // preskoc cislo
+                        }
+                        else if ("d:" == pars)
+                        {
+                            Scan();  //preskoc d:
+                            analyzer.Check(Kind.NUMBER);
+                            duration = System.Convert.ToInt32(analyzer.ToString());
+                            Scan(); // preskoc cislo
+                        }
+                        pars = analyzer.ToString();
+                    }
+                    Syntax randomTone = new RandomTone(volume, duration);
+                    result.Add(randomTone);
+				}
+				
 				else if ("pauza" == keyword)
                 {
 					Scan();
@@ -581,5 +605,5 @@
 			Scan();
 			return new RandConst(minVal, maxVal);
 		}
-	}
+    }
 }
