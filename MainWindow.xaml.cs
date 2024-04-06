@@ -14,6 +14,7 @@ using System.ComponentModel;
 using System.Windows.Automation;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
+using System.Text;
 
 namespace Diplomka
 {
@@ -514,14 +515,24 @@ namespace Diplomka
 
 		private void SuggestionList_PreviewKeyDown(object sender, KeyEventArgs e)
 		{
-			if (Key.Enter == e.Key)
+			if (Key.Enter == e.Key || Key.Space == e.Key)
 			{
-				string selectedValue = SuggestionList.SelectedItem.ToString();
-				string prefix = CodeTab.Text.Substring(0, _startSubstr);
-				string postFix = CodeTab.Text.Substring(selectedValue.Length);
-				CodeTab.Text = string.Concat(prefix, selectedValue, postFix);
-				_caretPos = prefix.Length + selectedValue.Length;
-				goto FocusCodeTab;
+                if (SuggestionList.SelectedItem != null)
+                {
+
+                    while (0 < _caretPos && !char.IsWhiteSpace(CodeTab.Text[_caretPos - 1])) 
+					{
+						_caretPos--;
+					}
+					var sb = new StringBuilder(CodeTab.Text);
+					string selectedValue = SuggestionList.SelectedItem.ToString();
+					sb.Remove(_caretPos, CodeTab.CaretIndex - _caretPos);
+					sb.Insert(_caretPos, selectedValue);
+					sb.Insert(_caretPos + selectedValue.Length, " ");
+					CodeTab.Text = sb.ToString();
+					_caretPos += selectedValue.Length + 1;
+                    goto FocusCodeTab;
+                }
 			}
 			else if (Key.Escape == e.Key) 
 			{

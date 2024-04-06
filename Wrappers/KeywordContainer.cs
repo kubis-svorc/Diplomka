@@ -16,7 +16,7 @@ namespace Diplomka.Wrappers
         {
             Keywords = new HashSet<string>
             {
-                "nastroj", "hraj", "opakuj", "stale", "ak", "inak", "koniec", "urob", "vypis", "vlakno"
+                "nastroj", "hraj", "opakuj", "stale", "ak", "inak", "koniec", "urob", "vypis", "vlakno", "akord"
             };
 
             Headers = new HashSet<string> 
