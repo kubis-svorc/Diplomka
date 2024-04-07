@@ -1,9 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using System.Linq;
-
-namespace Diplomka.Wrappers
+﻿namespace Diplomka.Wrappers
 {
+    using System.Collections.Generic;
+    using System.Text.RegularExpressions;
+
     public static class KeywordContainer
     {
         public static readonly ICollection<string> Keywords;
@@ -16,7 +15,10 @@ namespace Diplomka.Wrappers
         {
             Keywords = new HashSet<string>
             {
-                "nastroj", "hraj", "opakuj", "stale", "ak", "inak", "koniec", "urob", "vypis", "vlakno", "akord"
+                "nastroj", "hraj", "opakuj", "stale", "ak", "inak", "koniec", "urob", "vypis", "vlakno", "akord",
+                "c1", "d1", "e1", "f1", "g1", "a1", "h1", "c2", "d2", "e2", "f2", "g2", "a2","h2", "c3",
+                "ck1", "dk1", "ek1", "fk1", "gk1", "ak1", "hk1", "ck2", "dk2", "ek2", "fk2", "gk2", "ak2", "hk2",
+                "cb1", "db1", "eb1", "fb1", "gb1", "ab1", "hb1", "cb2", "db2", "eb2", "fb2", "gb2", "ab2", "hb2"
             };
 
             Headers = new HashSet<string> 

@@ -7,7 +7,274 @@
         mc:Ignorable="d"
         Title="Pomoc" Height="450" Width="800">
     <Grid>
-        <TextBox IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Name="HelpTab" HorizontalAlignment="Center" TextAlignment="Center" KeyDown="HelpTab_KeyDown" />
-        <Button Content="OK" HorizontalAlignment="Center" VerticalAlignment="Bottom" Click="OK_Button_Click" Width="80px" Margin="10"/>
+        <ListView Name="HelpTab" HorizontalAlignment="Center" KeyDown="HelpTab_KeyDown" AutomationProperties.HelpText="Okno s nápovedami" AutomationProperties.Name="Okno s nápovedami" Width="780" >
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                </Style>
+            </ListView.ItemContainerStyle>
+
+            <ListViewItem Content="Ovládanie aplikácie:"/>
+            <ListViewItem Content="Otvoriť súbor s kódom - CTRL O" />
+            <ListViewItem Content="Nový súbor - CTRL N"/>
+            <ListViewItem Content="Uloženie súboru - CTRL S"/>
+            <ListViewItem Content="Uložiť súbor ako - CTRL SHIFT S" />
+            <ListViewItem Content="Ukončenie aplikácie alebo zatvorenie okna - ALT F4"/>
+            <ListViewItem Content="Otvorenie okna s pomocou a prehľadom príkazov - F1" />
+            <ListViewItem Content="Spustenie napísaného programu - F5" />
+            <ListViewItem Content="Ukočenie bežiaceho programu - SHIFT F5"/>
+            <ListViewItem Content="Prepnutie na chybový panel alebo panel s hlásením - F6" />
+            <ListViewItem Content="Navigácia v kóde v jednej urovni - CTRL H" />
+            <ListViewItem Content="Prepnutie na zoznam ponuky príkazov - CTRL SPACE" />
+            <ListViewItem Content="Potvrdenie vybratej možnosti zo zoznamu ponuky príkazov - ENTER alebo SPACE" />
+            <ListViewItem Content="Návrat bez výberu možnosti zo zoznamu ponuky príkazov - ESC" />
+            <ListViewItem Content="Zväčšenie veľkosti písma - CTRL +" />
+            <ListViewItem Content="Zmenšenie veľkosti písma - CTRL -" />
+            <ListViewItem Content="Navigácia na riadok s chybou z panelu hlásení - ENTER alebo SPACE" />
+            
+            <ListViewItem Content="Príkazy a príklady:" />
+
+            <ListViewItem>
+                <ListViewItem.Content>
+                    <TextBlock>                                            
+                        Hraj tón d:dĺžka h:hlasitosť -
+                        <LineBreak/> zahrá tón s názvom na dobu danú dobu a hlasitosťou:
+                        <LineBreak/> tón - označenie tónu v rozsahu od C1 do C3,
+                        <LineBreak/> parameter d: číslo určuje dĺžku doby v milisekundách,
+                        <LineBreak/> parameter h: číslo v rozsahu od 0 do 100 určuje hlasitsť tónu.
+                        <LineBreak/> parametre d a h možno vynechať pre prednastavené hodnoty 500 ms a 100 hlasitosť.
+                    </TextBlock>
+                </ListViewItem.Content>
+            </ListViewItem>
+            <ListViewItem AutomationProperties.Name="Príklad príkazu hraj : zahrá tón c1 na dobu 1000 ms (1 sekunda) s hlasitosťou 80%"
+                  AutomationProperties.HelpText="Príklad príkazu hraj : zahrá tón c1 na dobu 1000 ms (1 sekunda) s hlasitosťou 80%">
+                <ListViewItem.Content>
+                    <TextBlock>
+                        hraj c1 d: 1000 h: 80
+                    </TextBlock>
+                </ListViewItem.Content>
+            </ListViewItem>
+
+            <ListViewItem>
+                <ListViewItem.Content>
+                    <TextBlock>
+                        Akord tón1 tón2 ... tón4 d:dĺžka h:hlasitosť - 
+                        <LineBreak/> Zahrá akord z minimálne 2 a najviac 4 tónov s danou dĺžkou a hlasitosťou:
+                        <LineBreak/> tón1 ... tón4 - označenie tónov od C1 do C3
+                        <LineBreak/> parameter d: číslo určujúce dĺžku doby v milisekudnách,
+                        <LineBreak/> parameter h: číslo určujúce hlasitosť od 0 do 100
+                    </TextBlock>
+                </ListViewItem.Content>
+            </ListViewItem>
+            <ListViewItem AutomationProperties.Name="Príklad príkazu akord : zahrá naraz 3 tóny c1, e1 a g1"
+                  AutomationProperties.HelpText="Príklad príkazu akord : zahrá naraz 3 tóny c1, e1 a g1">
+                <ListViewItem.Content>
+                    <TextBlock>
+                        akord c1 e1 g1 h:100 d:800
+                    </TextBlock>
+                </ListViewItem.Content>
+            </ListViewItem>
+
+            <ListViewItem>
+                <ListViewItem.Content>
+                    <TextBlock>
+                        nástroj názov - 
+                        <LineBreak/> nastaví daný nástroj ktorý bude znieť pri ďaľšom prehravaní tónov.
+                        <LineBreak/> možnosti nástrojov - husle, bicie, gitara, organ, hlas, trubka, harfa, akordeon, flauta, piano
+                    </TextBlock>
+                </ListViewItem.Content>
+            </ListViewItem>
+
+            <ListViewItem AutomationProperties.Name="Príklad príkazu nástroj : nasledovné tóny by zneli ako husle"
+                  AutomationProperties.HelpText="Príklad príkazu nástroj : nasledovné tóny by zneli ako husle">
+                <ListViewItem.Content>
+                    <TextBlock>
+                nástroj husle
+                    </TextBlock>
+                </ListViewItem.Content>
+            </ListViewItem>
+
+            <ListViewItem>
+                <ListViewItem.Content>
+                    <TextBlock>
+                        opakuj počet krát ... koniec - 
+                        <LineBreak/> Postupnosť príkazov v tele cyklu sa zopakuje daný počet krát.
+                        <LineBreak/> počet - môže byť uvedený ako priamo číslo alebo vyjadrený pomocou uloženej hodnoty v premennej.
+                        <LineBreak/> Koniec tela takéhoto cyklu musí byť označený slovo koniec
+                    </TextBlock>
+                </ListViewItem.Content>
+            </ListViewItem>
+            <ListViewItem AutomationProperties.Name="Príklad cyklu : zahrá 2 krát postupne tóny c1, e1 a g1"
+                  AutomationProperties.HelpText="Príklad cyklu : zahrá 2 krát postupne tóny c1, e1 a g1">
+                <ListViewItem.Content>
+                    <TextBlock>
+                        opakuj 2 krát
+                        <LineBreak/> hraj c1
+                        <LineBreak/> hraj e1
+                        <LineBreak/> hraj g1
+                        <LineBreak/> koniec
+                    </TextBlock>
+                </ListViewItem.Content>
+            </ListViewItem>
+
+
+            <ListViewItem>
+                <ListViewItem.Content>
+                    <TextBlock>
+                        ak podmienka ... koniec inak ... koniec -
+                        <LineBreak/> Program vyhodnotí podmienku ako matematické porovnanie (&lt;, &gt;, &lt;=, &gt;=, =) a podľa jej výsledku
+                        <LineBreak/> vykoná príslušnú časť (vetvu) programu.
+                        <LineBreak/> Prvá časť (vetva ak) aj druhá časť (vetva inak) musia byť ukončené slovom koniec.
+                        <LineBreak/> Namiesto slova ak môžeme napísať aj keď.
+                    </TextBlock>
+                </ListViewItem.Content>
+            </ListViewItem>
+            <ListViewItem AutomationProperties.Name="Príklad vetvenia : zahrá buď postupne 3 tóny alebo z nich zahrá akord"
+                  AutomationProperties.HelpText="Príklad vetvenia : zahrá buď postupne 3 tóny alebo z nich zahrá akord">
+                <ListViewItem.Content>
+                    <TextBlock>
+                        hodnota = 5
+                        <LineBreak/> hodnota = hodnota + 14
+                        <LineBreak/> ak hodnota &lt; 5
+                        <LineBreak/> hraj c1
+                        <LineBreak/> hraj e1
+                        <LineBreak/> hraj g1
+                        <LineBreak/> koniec
+                        <LineBreak/> inak
+                        <LineBreak/> akord c1 e1 g1
+                        <LineBreak/> koniec
+                    </TextBlock>
+                </ListViewItem.Content>
+            </ListViewItem>
+
+            <ListViewItem>
+                <ListViewItem.Content>
+                    <TextBlock>
+                        urob podprogram ... koniec -
+                        <LineBreak/> vytvorenie pomenovanej postupnosti príkazov. Telo podprogramu nám umožňuje vykonávať túto postupnosť bez potreby 
+                        <LineBreak/> opakovaného neustáleho písania opakovaného kódu.
+                        <LineBreak/> Telo podprogramu musí byť ukončené slovom koniec.
+                        <LineBreak/> Namiesto slova urob možno použiť aj slovo funkcia.
+                    </TextBlock>
+                </ListViewItem.Content>
+            </ListViewItem>
+            <ListViewItem AutomationProperties.Name="Príklad podprogramu, ktorý zahrá stupnicu Cdur"
+                  AutomationProperties.HelpText="Príklad podprogramu, ktorý zahrá stupnicu Cdur">
+                <ListViewItem.Content>
+                    <TextBlock>
+                        urob stupnica
+                        <LineBreak/> hraj c1
+                        <LineBreak/> hraj d1
+                        <LineBreak/> hraj e1
+                        <LineBreak/> hraj f1
+                        <LineBreak/> hraj g1
+                        <LineBreak/> hraj a1
+                        <LineBreak/> hraj h1
+                        <LineBreak/> hraj c2
+                        <LineBreak/> koniec
+                    </TextBlock>
+                </ListViewItem.Content>
+            </ListViewItem>
+
+            <ListViewItem>
+                <ListViewItem.Content>
+                    <TextBlock>
+                        výpis premenná - 
+                        <LineBreak/> do panelu hlásení vypíše hodnotu premennej v danom momente.
+                        <LineBreak/> Ak sa teda hodnota premennej mení počas behu programu, je možné takto sledovať jej zmeny.
+                    </TextBlock>
+                </ListViewItem.Content>
+            </ListViewItem>            
+            <ListViewItem AutomationProperties.Name="Príklad výpisu : do panelu hlásení sa vypíše hodnota 12"
+                  AutomationProperties.HelpText="Príklad výpisu : do panelu hlásení sa vypíše hodnota 12">
+                <ListViewItem.Content>
+                    <TextBlock>
+                        premenna = 12
+                        <LineBreak/> vypis premanna
+                    </TextBlock>
+                </ListViewItem.Content>
+            </ListViewItem>
+
+            <ListViewItem>
+                <ListViewItem.Content>
+                    <TextBlock>
+                        vlákno názov ... koniec - 
+                        <LineBreak/> vytvorí vlákno, ktoré vykoná príkazy v jeho tele, nezávisle od iného vlákna. 
+                        <LineBreak/> Môžeme tak naraz zahrať rôzne tóny, vykonávať súčasne rôzne podprogramy, nastaviť rôzne nástroje alebo iné.
+                        <LineBreak/> Je to pomenovaný blok príkazov, ktorý sa vykonáva nezávisle od iného vlákna.
+                        <LineBreak/> Maximálny počet súbežných vlákien je 4, teda v programe možno mať najviac 4 vlákna.
+                        <LineBreak/> Názov vlákna môže byť ľubovoľné jednoslovné bezčíselné pomenovanie.
+                    </TextBlock>
+                </ListViewItem.Content>
+            </ListViewItem>
+            <ListViewItem AutomationProperties.Name="Príklad použitia 3 vlákien, ktoré v tomto prípade zahrajú naraz 3 tóny, každý s iným nástrojom."
+                  AutomationProperties.HelpText="Príklad použitia 3 vlákien, ktoré v tomto prípade zahrajú naraz 3 tóny, každý s iným nástrojom.">
+                <ListViewItem.Content>
+                    <TextBlock>
+                        vlákno prve
+                        <LineBreak/> nástroj hlas
+                        <LineBreak/> hraj c1
+                        <LineBreak/> koniec
+                        
+                        <LineBreak/> vlakno druhe
+                        <LineBreak/> nástroj gitara
+                        <LineBreak/> hraj e1
+                        <LineBreak/> koniec
+                        
+                        <LineBreak/> vlaknoi tretie
+                        <LineBreak/> nástroj husle
+                        <LineBreak/> hraj g1
+                        <LineBreak/> koniec
+                    </TextBlock>
+                </ListViewItem.Content>
+            </ListViewItem>
+
+            <ListViewItem>
+                <ListViewItem.Content>
+                    <TextBlock>
+                        losuj (od, do) -
+                        <LineBreak/> náhodne vygeneruje číslo v danom rozsahu.
+                        <LineBreak/> Toto číslo možno priradiť do premennej alebo používať vo vetveniach.
+                    </TextBlock>
+                </ListViewItem.Content>
+            </ListViewItem>
+            <ListViewItem AutomationProperties.Name="Príklad použitia náhodnej hodnoty, ktorá nastaví buď nástroj husle alebo nástroj klavír a nakonci zahrá akord"
+                  AutomationProperties.HelpText="Príklad použitia náhodnej hodnoty, ktorá nastaví buď nástroj husle alebo nástroj klavír a nakonci zahrá akord">
+                <ListViewItem.Content>
+                    <TextBlock>
+                        premenna = 12
+                        <LineBreak/> ak premenna &lt; losuj(1, 20)
+                        <LineBreak/> nastroj husle
+                        <LineBreak/> koniec
+                        <LineBreak/> inak 
+                        <LineBreak/> nastroj piano
+                        <LineBreak/> koniec
+                        <LineBreak/> akord e1 g1 h1
+                    </TextBlock>
+                </ListViewItem.Content>
+            </ListViewItem>
+
+            <ListViewItem>
+                <ListViewItem.Content>
+                    <TextBlock>
+                        nahodny - vygeneruje náhodný tón s náhodnou hlasitosťou (od 0 do 100) a náhodnou dobou (od 250 do 2500).
+                        <LineBreak/> Môžeme však generovať aj náhodný tón s danou hlasitosťou a dĺžkou:
+                        <LineBreak/> d: dĺžka
+                        <LineBreak/> h: hlasitosť
+                    </TextBlock>
+                </ListViewItem.Content>
+            </ListViewItem>
+            <ListViewItem AutomationProperties.Name="3 krát náhodne generovaný tón s danými parametrami aj náhodne generovanými parametrami"
+                  AutomationProperties.HelpText="3 krát náhodne generovaný tón s danými parametrami aj náhodne generovanými parametrami">
+                <ListViewItem.Content>
+                    <TextBlock>
+                        opakuj 3 krat
+                        <LineBreak/> nahodny
+                        <LineBreak/> nahodny d:500 h:80
+                        <LineBreak/> koniec
+                    </TextBlock>
+                </ListViewItem.Content>
+            </ListViewItem>
+        </ListView>        
     </Grid>
 </Window>

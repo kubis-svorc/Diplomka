@@ -1,8 +1,6 @@
 ﻿namespace Diplomka.Analyzators
 {
-	using Runtime;
-    using System;
-    using System.Windows.Documents;
+    using Runtime;
 
     public class SyntaxAnalyzer
 	{

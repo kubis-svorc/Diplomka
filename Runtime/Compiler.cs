@@ -1,9 +1,8 @@
 ﻿namespace Diplomka.Runtime
 {
     using Sanford.Multimedia.Midi;
-	using Diplomka.Analyzators;
-    using System.DirectoryServices.ActiveDirectory;
-    using System.Windows;
+    using Diplomka.Analyzators;
+    using System;
 
     public class Compiler
     {
@@ -239,14 +238,15 @@
 						{
 							Scan();  //preskoc h:
 							analyzer.Check(Kind.NUMBER);
-							volume = System.Convert.ToInt32(analyzer.ToString());
-							Scan(); // preskoc cislo
+							volume = Convert.ToInt32(analyzer.ToString());
+							volume = CalcuateVolume(volume);
+                            Scan(); // preskoc cislo
 						}
 						else if ("s:" == parameters)
 						{
 							Scan();  //preskoc s:
 							analyzer.Check(Kind.NUMBER);
-							direction = System.Convert.ToInt32(analyzer.ToString());
+							direction = Convert.ToInt32(analyzer.ToString());
 							Scan(); // preskoc cislo
 						}
 						else if ("d:" == parameters)
@@ -292,7 +292,8 @@
                         {
                             Scan();  //preskoc h:
                             analyzer.Check(Kind.NUMBER);
-                            volume = System.Convert.ToInt32(analyzer.ToString());
+                            volume = Convert.ToInt32(analyzer.ToString());
+							volume = CalcuateVolume(volume);
                             Scan(); // preskoc cislo
                         }
                         else if ("d:" == parameters)
@@ -311,27 +312,32 @@
 
 				else if ("opakuj" == keyword)
 				{
+					Scan();					
+					Syntax count = Compare();
+					analyzer.Check(Kind.WORD, "krat");
 					Scan();
-					keyword = analyzer.ToString();
-					if ("kým" == keyword || "kym" == keyword)
-                    {
-						Scan();
-						Syntax test = Compare();
-						result.Add(new WhileLoop(test, Parse()));
-						analyzer.Check(Kind.WORD, "koniec");
-						Scan();
-                    }
-					else
-                    {
-						Syntax count = Compare();
-						analyzer.Check(Kind.WORD, "krat");
-						Scan();
-						result.Add(new ForLoop(count, Parse()));						
-						Scan();
-					}
+					result.Add(new ForLoop(count, Parse()));
+					Scan();
+
+					//if ("kým" == keyword || "kym" == keyword)
+					//               {
+					//	Scan();
+					//	Syntax test = Compare();
+					//	result.Add(new WhileLoop(test, Parse()));
+					//	analyzer.Check(Kind.WORD, "koniec");
+					//	Scan();
+					//               }
+					//else
+					//               {
+					//	Syntax count = Compare();
+					//	analyzer.Check(Kind.WORD, "krat");
+					//	Scan();
+					//	result.Add(new ForLoop(count, Parse()));						
+					//	Scan();
+					//}
 				}
-	
-				else if ("ak" == keyword || "keď" == keyword || "ked" == keyword)
+
+                else if ("ak" == keyword || "keď" == keyword || "ked" == keyword)
                 {
 					Syntax test = null, bodyT = null, bodyF = null;
 					Scan();
@@ -405,21 +411,23 @@
 				{
 					Scan();
 					string pars = analyzer.ToString();
-					int volume = 100, duration = 250;
+					var rnd = new Random();
+					int volume = rnd.Next(25, 127), duration = rnd.Next(250, 2500);
                     while (pars.IndexOf(":") > -1)
                     {
                         if ("h:" == pars)
                         {
                             Scan();  //preskoc h:
                             analyzer.Check(Kind.NUMBER);
-                            volume = System.Convert.ToInt32(analyzer.ToString());
+                            volume = Convert.ToInt32(analyzer.ToString());
+							volume = CalcuateVolume(volume);
                             Scan(); // preskoc cislo
                         }
                         else if ("d:" == pars)
                         {
                             Scan();  //preskoc d:
                             analyzer.Check(Kind.NUMBER);
-                            duration = System.Convert.ToInt32(analyzer.ToString());
+                            duration = Convert.ToInt32(analyzer.ToString());
                             Scan(); // preskoc cislo
                         }
                         pars = analyzer.ToString();
@@ -489,6 +497,7 @@
 				string name = analyzer.ToString();
 				if (name == "losuj")
                 {
+					Scan();
 					result = NumberGenerator();
                 }
 				else if (!VirtualMachine.Variables.ContainsKey(name))
@@ -605,5 +614,15 @@
 			Scan();
 			return new RandConst(minVal, maxVal);
 		}
-    }
+
+		private int CalcuateVolume(int percentage)
+		{
+			if (percentage > 100)
+			{
+				percentage = 100;
+			}
+
+			return Convert.ToInt32(Math.Floor(percentage * 127D / 100D));
+		}
+	}
 }

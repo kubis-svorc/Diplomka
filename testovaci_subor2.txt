@@ -1,0 +1,32 @@
+﻿vlakno hlavné
+	opakuj 5 krat
+		hraj c
+		c = 5
+		ak  c > 12
+			c = c - 1
+		koniec
+	koniec
+	
+	a = 12
+	ak a = 3
+		opakuj a krat
+			hraj g
+		koniec
+	koniec
+	inak
+		hraj e
+	koniec
+
+	urob prvypodprogram
+		opakuj 3 krat
+		koniec
+		b = 5
+		ak b < 5
+			b = b -1
+		koniec
+		inak 
+			b = b + 1
+		koniec
+	koniec
+	prvypodprogram
+koniec

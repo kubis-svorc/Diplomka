@@ -1,13 +1,13 @@
-﻿using Sanford.Multimedia.Midi;
-using System;
-using System.Collections.Generic;
-using Diplomka.Wrappers;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Linq;
-
-namespace Diplomka.Runtime
+﻿namespace Diplomka.Runtime
 {
+    using Sanford.Multimedia.Midi;
+    using System;
+    using System.Collections.Generic;
+    using Diplomka.Wrappers;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using System.Linq;
+
     public class VirtualMachine : IDisposable
 	{
 		private const int DEVICE_ID = 0, MemoryAllocSize = 50;//0x10000; // memory alloc

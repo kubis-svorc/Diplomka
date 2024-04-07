@@ -1,26 +1,24 @@
-﻿using System;
-using System.Threading;
-using System.Windows;
-using System.Windows.Input;
-using Diplomka.Runtime;
-using Microsoft.Win32;
-using Diplomka.Analyzators;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Windows.Controls;
-using System.Windows.Media;
-using System.IO;
-using System.ComponentModel;
-using System.Windows.Automation;
-using System.Collections.Generic;
-using System.ComponentModel.Design;
-using System.Text;
-
-namespace Diplomka
+﻿namespace Diplomka
 {
+    using System;
+    using System.Threading;
+    using System.Windows;
+    using System.Windows.Input;
+    using Diplomka.Runtime;
+    using Microsoft.Win32;
+    using Diplomka.Analyzators;
+    using System.Linq;
+    using System.Text.RegularExpressions;
+    using System.Windows.Controls;
+    using System.Windows.Media;
+    using System.IO;
+    using System.ComponentModel;
+    using System.Windows.Automation;
+    using System.Text;
+
     public partial class MainWindow : Window
 	{
-		private int _startSubstr, _endSubstr, _caretPos;
+		private int _caretPos;
 		private bool _isTextBoxFocused;
 		private CancellationTokenSource _cancelTokenSource;
 		private bool IsShiftPressed, IsCtrlPressed, IsAltPressed, DarkTheme;
@@ -127,7 +125,7 @@ namespace Diplomka
 				try
 				{
 					VirtualMachine.SaveMIDI(midiPath);
-                    File.WriteAllText(textPath, CodeTab.Text, System.Text.Encoding.UTF8);
+                    File.WriteAllText(textPath, CodeTab.Text, Encoding.UTF8);
 				}
 				catch (Exception ex)
 				{
@@ -210,13 +208,19 @@ namespace Diplomka
 
         private void UpdateSuggestionList() 
 		{
-            var builder = new System.Text.StringBuilder();
+            var builder = new StringBuilder();
 			int i = CodeTab.CaretIndex - 1;
-			while (i >= 0 && !char.IsWhiteSpace(CodeTab.Text[i])) 
-			{
-				builder.Insert(0, CodeTab.Text[i]);
-				i--;
-			}
+            //while (i >= 0 && !char.IsWhiteSpace(CodeTab.Text[i])) 
+            //{
+            //	builder.Insert(0, CodeTab.Text[i]);
+            //	i--;
+            //}
+            while (i >= 0 && char.IsLetterOrDigit(CodeTab.Text[i]))
+            {
+                builder.Insert(0, CodeTab.Text[i]);
+                i--;
+            }
+
             string wordUnderCaret = builder.ToString();
 			if (wordUnderCaret.Length < 2) 
 			{
@@ -274,7 +278,6 @@ namespace Diplomka
 					ListViewItem item = SuggestionList.ItemContainerGenerator.ContainerFromIndex(0) as ListViewItem;
 					item.Focus();
 					break;
-
 				default:
 					break;
             }
