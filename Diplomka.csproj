@@ -22,7 +22,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="testovaci_subor.txt" />
     <None Remove="testovaci_subor2.midi" />
+    <None Remove="testovaci_subor2.txt" />
   </ItemGroup>
 
   <ItemGroup>

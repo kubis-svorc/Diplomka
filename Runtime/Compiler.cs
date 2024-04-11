@@ -3,6 +3,7 @@
     using Sanford.Multimedia.Midi;
     using Diplomka.Analyzators;
     using System;
+    using System.Security.Policy;
 
     public class Compiler
     {
@@ -22,180 +23,6 @@
             analyzer.Init(programText);
         }
 
-        public static int GetInstrumentCode(string instrument)
-        {
-            int instrumentCode;
-
-            switch (instrument)
-            {
-				case "husle":
-				case "violin":
-					instrumentCode = (int)GeneralMidiInstrument.Violin;
-					break;
-                case "bicie":
-                case "drums":
-                    instrumentCode = (int)GeneralMidiInstrument.SynthDrum;
-                    break;
-                case "gitara":
-                case "guitar":
-                    instrumentCode = (int)GeneralMidiInstrument.AcousticGuitarNylon;
-                    break;
-                case "organ":
-                    instrumentCode = (int)GeneralMidiInstrument.ChurchOrgan;
-                    break;
-                case "spev":
-                case "hlas":
-                case "voice":
-                    instrumentCode = (int)GeneralMidiInstrument.VoiceOohs;
-                    break;
-                case "trubka":
-                case "trumpet":
-                    instrumentCode = (int)GeneralMidiInstrument.Trumpet;
-                    break;
-                case "harfa":
-                case "haprh":
-                    instrumentCode = (int)GeneralMidiInstrument.OrchestralHarp;
-                    break;
-                case "akordeon":
-                case "accordion":
-                    instrumentCode = (int)GeneralMidiInstrument.Accordion;
-                    break;
-				case "flauta":
-				case "flute":
-					instrumentCode = (int)GeneralMidiInstrument.Flute;
-					break;
-                case "klavir":
-                case "piano":
-                default:
-                    instrumentCode = (int)GeneralMidiInstrument.AcousticGrandPiano;
-                    break;
-            }
-            return instrumentCode;
-        }
-
-		private int GetToneCode(string tone)
-		{
-			int code;
-			switch (tone)
-			{
-				case "c1":
-				case "c":
-					code = (int)Tone.C;
-					break;
-				case "ck1":
-				case "db1":
-                case "ck":
-                case "db":
-                    code = (int)Tone.Cis;
-					break;
-				case "d1":
-				case "d":
-					code = (int)Tone.D;
-					break;
-				case "dk1":
-				case "eb1":
-                case "dk":
-                case "eb":
-                    code = (int)Tone.Dis;
-					break;
-				case "e1":
-				case "fb1":
-                case "e":
-                case "fb":
-                    code = (int)Tone.E;
-					break;
-				case "ek1":
-				case "f1":
-                case "ek":
-                case "f":
-                    code = (int)Tone.F;
-					break;
-				case "fk1":
-				case "gb1":
-                case "fk":
-                case "gb":
-                    code = (int)Tone.Fis;
-					break;
-				case "g1":
-				case "g":
-					code = (int)Tone.G;
-					break;
-				case "gk1":
-				case "ab1":
-                case "gk":
-                case "ab":
-                    code = (int)Tone.Gis;
-					break;
-				case "a1":
-				case "a":
-					code = (int)Tone.A;
-					break;
-				case "ak1":
-				case "b1":
-                case "ak":
-                case "b":
-                    code = (int)Tone.B;
-					break;
-				case "h1":
-				case "cb1":
-                case "h":
-                case "cb":
-                    code = (int)Tone.H;
-					break;
-				case "c2":
-					code = (int)Tone.C2;
-					break;
-				case "ck2":
-				case "db2":
-					code = (int)Tone.Cis2;
-					break;
-				case "d2":
-					code = (int)Tone.D2;
-					break;
-				case "dk2":
-				case "eb2":
-					code = (int)Tone.Dis2;
-					break;
-				case "e2":
-				case "fb2":
-					code = (int)Tone.E2;
-					break;
-				case "ek2":
-				case "f2":
-					code = (int)Tone.F2;
-					break;
-				case "fk2":
-				case "gb2":
-					code = (int)Tone.Fis2;
-					break;
-				case "g2":
-					code = (int)Tone.G2;
-					break;
-				case "gk2":
-				case "ab2":
-					code = (int)Tone.Gis2;
-					break;
-				case "a2":
-					code = (int)Tone.A2;
-					break;
-				case "ak2":
-				case "b2":
-					code = (int)Tone.B2;
-					break;
-				case "h2":
-				case "cb2":
-					code = (int)Tone.H2;
-					break;
-				case "c3":
-					code = (int)Tone.C3;
-					break;
-				default:
-					code = 0;
-					throw new Exceptions.SyntaxException($"Chyba v riadku {analyzer.row} : Neznámy tón {tone}");
-			}
-			return code;
-		}
-
 		/// <summary>
 		/// Function creates Syntax Tree reperesenting program
 		/// </summary>
@@ -210,7 +37,7 @@
 				if ("nastroj" == keyword || "nástroj" == keyword)
 				{
 					Scan();
-					int instrumentCode = GetInstrumentCode(analyzer.ToString());
+					int instrumentCode = GetInstrumentCode(analyzer.ToString(), analyzer.row);
 					result.Add(new Instrument(new Const(instrumentCode)));
 					Scan();
 				}
@@ -225,7 +52,7 @@
 						ton += analyzer.ToString();
 						Scan();
 					}
-					int toneCode = GetToneCode(ton); // ton <c, d, e, f, g, ek2, ... >					
+					int toneCode = GetToneCode(ton, analyzer.row); // ton <c, d, e, f, g, ek2, ... >					
 					string parameters = analyzer.ToString();
 
 					int duration = VirtualMachine.DEFAULT_DURATION,
@@ -276,7 +103,7 @@
                             ton += analyzer.ToString();
                             Scan();
                         }
-                        toneCode = GetToneCode(ton);
+                        toneCode = GetToneCode(ton, analyzer.row);
 						tones[i] = new Const(toneCode);
                         ++i;
 					}
@@ -305,7 +132,6 @@
                         }
                         parameters = analyzer.ToString();
                     }
-
                     
 					result.Add(new Accord(tones, new Const(duration), new Const(volume)));
                 }
@@ -358,7 +184,7 @@
 					result.Add(ifesle);
                 }
 
-				else if ("def" == keyword || "fun" == keyword || "funkcia" == keyword || "urob" == keyword)
+				else if ("fun" == keyword || "funkcia" == keyword || "urob" == keyword || "podprogram" == keyword)
                 {
 					Scan();
 					analyzer.Check(Kind.WORD);
@@ -407,7 +233,7 @@
 					result.Add(randomConst);
                 }
 
-				else if ("nahodny" == keyword) 
+				else if ("nahodny" == keyword || "náhodný" == keyword) 
 				{
 					Scan();
 					string pars = analyzer.ToString();
@@ -615,7 +441,7 @@
 			return new RandConst(minVal, maxVal);
 		}
 
-		private int CalcuateVolume(int percentage)
+		private static int CalcuateVolume(int percentage)
 		{
 			if (percentage > 100)
 			{
@@ -624,5 +450,175 @@
 
 			return Convert.ToInt32(Math.Floor(percentage * 127D / 100D));
 		}
-	}
+
+        private static int GetInstrumentCode(string instrument, int row)
+        {
+            int instrumentCode;
+
+            switch (instrument)
+            {
+                case "husle":
+                    instrumentCode = (int)GeneralMidiInstrument.Violin;
+                    break;
+                case "bicie":
+                    instrumentCode = (int)GeneralMidiInstrument.SynthDrum;
+                    break;
+                case "gitara":
+                    instrumentCode = (int)GeneralMidiInstrument.AcousticGuitarNylon;
+                    break;
+                case "organ":
+                    instrumentCode = (int)GeneralMidiInstrument.ChurchOrgan;
+                    break;
+                case "spev":
+                case "hlas":
+                    instrumentCode = (int)GeneralMidiInstrument.VoiceOohs;
+                    break;
+                case "trubka":
+                case "trúbka":
+                    instrumentCode = (int)GeneralMidiInstrument.Trumpet;
+                    break;
+                case "harfa":
+                    instrumentCode = (int)GeneralMidiInstrument.OrchestralHarp;
+                    break;
+                case "akordeon":
+                case "akordeón":
+                    instrumentCode = (int)GeneralMidiInstrument.Accordion;
+                    break;
+                case "flauta":
+                    instrumentCode = (int)GeneralMidiInstrument.Flute;
+                    break;
+                case "klavir":
+                case "klavír":
+                case "piano":
+                    instrumentCode = (int)GeneralMidiInstrument.AcousticGrandPiano;
+                    break;
+                default:
+                    throw new Exceptions.SyntaxException($"Chyba v riadku {row} : Neznámy nástroj {instrument}");
+            }
+            return instrumentCode;
+        }
+
+        private static int GetToneCode(string tone, int row)
+        {
+            int code;
+            switch (tone)
+            {
+                case "c1":
+                case "c":
+                    code = (int)Tone.C;
+                    break;
+                case "ck1":
+                case "db1":
+                case "ck":
+                case "db":
+                    code = (int)Tone.Cis;
+                    break;
+                case "d1":
+                case "d":
+                    code = (int)Tone.D;
+                    break;
+                case "dk1":
+                case "eb1":
+                case "dk":
+                case "eb":
+                    code = (int)Tone.Dis;
+                    break;
+                case "e1":
+                case "fb1":
+                case "e":
+                case "fb":
+                    code = (int)Tone.E;
+                    break;
+                case "ek1":
+                case "f1":
+                case "ek":
+                case "f":
+                    code = (int)Tone.F;
+                    break;
+                case "fk1":
+                case "gb1":
+                case "fk":
+                case "gb":
+                    code = (int)Tone.Fis;
+                    break;
+                case "g1":
+                case "g":
+                    code = (int)Tone.G;
+                    break;
+                case "gk1":
+                case "ab1":
+                case "gk":
+                case "ab":
+                    code = (int)Tone.Gis;
+                    break;
+                case "a1":
+                case "a":
+                    code = (int)Tone.A;
+                    break;
+                case "ak1":
+                case "b1":
+                case "ak":
+                case "b":
+                    code = (int)Tone.B;
+                    break;
+                case "h1":
+                case "cb1":
+                case "h":
+                case "cb":
+                    code = (int)Tone.H;
+                    break;
+                case "c2":
+                    code = (int)Tone.C2;
+                    break;
+                case "ck2":
+                case "db2":
+                    code = (int)Tone.Cis2;
+                    break;
+                case "d2":
+                    code = (int)Tone.D2;
+                    break;
+                case "dk2":
+                case "eb2":
+                    code = (int)Tone.Dis2;
+                    break;
+                case "e2":
+                case "fb2":
+                    code = (int)Tone.E2;
+                    break;
+                case "ek2":
+                case "f2":
+                    code = (int)Tone.F2;
+                    break;
+                case "fk2":
+                case "gb2":
+                    code = (int)Tone.Fis2;
+                    break;
+                case "g2":
+                    code = (int)Tone.G2;
+                    break;
+                case "gk2":
+                case "ab2":
+                    code = (int)Tone.Gis2;
+                    break;
+                case "a2":
+                    code = (int)Tone.A2;
+                    break;
+                case "ak2":
+                case "b2":
+                    code = (int)Tone.B2;
+                    break;
+                case "h2":
+                case "cb2":
+                    code = (int)Tone.H2;
+                    break;
+                case "c3":
+                    code = (int)Tone.C3;
+                    break;
+                default:
+                    throw new Exceptions.SyntaxException($"Chyba v riadku {row} : Neznámy tón {tone}");
+            }
+            return code;
+        }
+
+    }
 }
