@@ -38,11 +38,11 @@
                 <ListViewItem.Content>
                     <TextBlock>                                            
                         Hraj tón d:dĺžka h:hlasitosť -
-                        <LineBreak/> zahrá tón s názvom na dobu danú dobu a hlasitosťou:
+                        <LineBreak/> zahrá tón s daným označením na dobu a hlasitosťou podľa parametrov:
                         <LineBreak/> tón - označenie tónu v rozsahu od C1 do C3,
                         <LineBreak/> parameter d: číslo určuje dĺžku doby v milisekundách,
                         <LineBreak/> parameter h: číslo v rozsahu od 0 do 100 určuje hlasitsť tónu.
-                        <LineBreak/> parametre d a h možno vynechať pre prednastavené hodnoty 500 ms a 100 hlasitosť.
+                        <LineBreak/> parametre d: a h: možno vynechať pre prednastavené hodnoty 500 ms a 100 hlasitosť.
                     </TextBlock>
                 </ListViewItem.Content>
             </ListViewItem>
