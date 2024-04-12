@@ -555,17 +555,16 @@
                     case MyAccordCommand acc:
                         if (cancellationToken.IsCancellationRequested)
                         {
-							int count = acc.commands.Length;
-							acc.commands = new ChannelMessage[count];
-							for (int i = 0; i < count; i++)
+							int channel, data1, data2;
+							for (int i = 0; i < acc.commands.Length; i++)
 							{
-								acc.commands[i] = new ChannelMessage(ChannelCommand.NoteOff, acc.commands[0].MidiChannel, acc.commands[0].Data1, acc.commands[0].Data2);
-
-                            }
-                            foreach (var cmd in acc.commands)
-                            {
+								channel = acc.commands[i].MidiChannel;
+								data1 = acc.commands[i].Data1;
+								data2 = acc.commands[i].Data2;
+								var cmd = new ChannelMessage(ChannelCommand.NoteOff, channel, data1, data2);
                                 OUTDEVICE.Send(cmd);
                             }
+							acc.commands = null;
                             break;
                         }
                         delayTime = 0; delayInterval = 200; remainingDelay = acc.Duration;
