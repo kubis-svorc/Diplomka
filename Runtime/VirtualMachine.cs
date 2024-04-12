@@ -10,7 +10,7 @@
 
     public class VirtualMachine : IDisposable
 	{
-		private const int DEVICE_ID = 0, MemoryAllocSize = 50;//0x10000; // memory alloc
+		private const int DEVICE_ID = 0, MemoryAllocSize = 0x10000; // memory alloc
 		public delegate void PrinterFunc(string msg);
 		public static PrinterFunc Print;
 
@@ -370,7 +370,7 @@
 			var thread2 = Task.Run(() => PlayFunction(Thread2, cancellationToken), cancellationToken);
 			var thread3 = Task.Run(() => PlayFunction(Thread3, cancellationToken), cancellationToken);
 			var thread4 = Task.Run(() => PlayFunction(Thread4, cancellationToken), cancellationToken);
-			await Task.WhenAll(new[] { thread1, thread2, thread3, thread4 });
+			await Task.WhenAll(thread1, thread2, thread3, thread4);
 		}
 		
 		public static void SetJumpToProgramBody()
@@ -409,6 +409,7 @@
 				case 2:
 					Thread2.Add(command);
 					break;
+				case 1:	//Default to channel 1?
 				default:
 					Thread1.Add(command);
 					break;
