@@ -138,29 +138,23 @@
 
 				else if ("opakuj" == keyword)
 				{
-					Scan();					
-					Syntax count = Compare();
-					analyzer.Check(Kind.WORD, "krat");
 					Scan();
-					result.Add(new ForLoop(count, Parse()));
-					Scan();
-
-					//if ("kým" == keyword || "kym" == keyword)
-					//               {
-					//	Scan();
-					//	Syntax test = Compare();
-					//	result.Add(new WhileLoop(test, Parse()));
-					//	analyzer.Check(Kind.WORD, "koniec");
-					//	Scan();
-					//               }
-					//else
-					//               {
-					//	Syntax count = Compare();
-					//	analyzer.Check(Kind.WORD, "krat");
-					//	Scan();
-					//	result.Add(new ForLoop(count, Parse()));						
-					//	Scan();
-					//}
+					if ("kým" == keyword || "kym" == keyword)
+					{
+						Scan();
+						Syntax test = Compare();
+						result.Add(new WhileLoop(test, Parse()));
+						analyzer.Check(Kind.WORD, "koniec");
+						Scan();
+					}
+					else
+					{
+						Syntax count = Compare();
+						analyzer.Check(Kind.WORD, new[] { "krat", "krát" });
+						Scan();
+						result.Add(new ForLoop(count, Parse()));
+						Scan();
+					}
 				}
 
                 else if ("ak" == keyword || "keď" == keyword || "ked" == keyword)
@@ -215,7 +209,7 @@
 
 				else if ("vlakno" == keyword || "vlákno" == keyword)
 				{
-					// todo: vlakno == midi kanal                
+					// todo: vlakno == midi kanal
 					Scan();
 					string name = analyzer.ToString();
 					Scan();
@@ -223,7 +217,6 @@
 					result.Add(thread);
 					analyzer.Check(Kind.WORD, "koniec");
 					Scan();
-
                 }
 				
 				else if ("losuj" == keyword)
@@ -233,7 +226,7 @@
 					result.Add(randomConst);
                 }
 
-				else if ("nahodny" == keyword || "náhodný" == keyword) 
+				else if ("nahodny" == keyword || "náhodný" == keyword)
 				{
 					Scan();
 					string pars = analyzer.ToString();
