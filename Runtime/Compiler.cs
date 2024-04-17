@@ -44,48 +44,33 @@
 
 				else if ("hraj" == keyword)
 				{
+                    int duration, volume, direction = 0;
 					Scan(); //preskoc hraj
 					string ton = analyzer.ToString();
-					Scan();
-					if (Kind.NUMBER == analyzer.kind)   // c2, c3, c1, ...
+					if ("náhodný" == ton || "nahodny" == ton)
 					{
-						ton += analyzer.ToString();
-						Scan();
-					}
-					int toneCode = GetToneCode(ton, analyzer.row); // ton <c, d, e, f, g, ek2, ... >					
-					string parameters = analyzer.ToString();
-
-					int duration = VirtualMachine.DEFAULT_DURATION,
-						volume = VirtualMachine.DEFAULT_VOLUME,
-						direction = 0;
-
-					while (parameters.IndexOf(":") > -1)
-					{
-						if ("h:" == parameters)
-						{
-							Scan();  //preskoc h:
-							analyzer.Check(Kind.NUMBER);
-							volume = Convert.ToInt32(analyzer.ToString());
-							volume = CalcuateVolume(volume);
-                            Scan(); // preskoc cislo
-						}
-						else if ("s:" == parameters)
-						{
-							Scan();  //preskoc s:
-							analyzer.Check(Kind.NUMBER);
-							direction = Convert.ToInt32(analyzer.ToString());
-							Scan(); // preskoc cislo
-						}
-						else if ("d:" == parameters)
-						{
-							Scan();  //preskoc d:
-							analyzer.Check(Kind.NUMBER);
-							duration = System.Convert.ToInt32(analyzer.ToString());
-							Scan(); // preskoc cislo
-						}
-						parameters = analyzer.ToString();
-					}
-					result.Add(new Analyzators.Tone(new Const(toneCode), new Const(duration), new Const(volume)));
+                        Scan();
+                        var rnd = new Random();
+                        volume = rnd.Next(25, 127);
+                        duration = rnd.Next(250, 2500);
+                        SetToneParameters(ref volume, ref duration, ref direction);
+                        Syntax randomTone = new RandomTone(volume, duration);
+                        result.Add(randomTone);
+                    }
+                    else 
+                    {
+                        if (Kind.NUMBER == analyzer.kind)   // c2, c3, c1, ...
+                        {
+                            ton += analyzer.ToString();
+                            Scan();
+                        }
+                        int toneCode = GetToneCode(ton, analyzer.row); // ton <c, d, e, f, g, ek2, ... >
+                        Scan();
+                        volume = VirtualMachine.DEFAULT_VOLUME;
+                        duration = VirtualMachine.DEFAULT_DURATION;
+                        SetToneParameters(ref volume, ref duration, ref direction);
+                        result.Add(new Analyzators.Tone(new Const(toneCode), new Const(duration), new Const(volume)));
+                    }					
 				}
 
 				else if ("akord" == keyword)
@@ -226,35 +211,6 @@
 					result.Add(randomConst);
                 }
 
-				else if ("nahodny" == keyword || "náhodný" == keyword)
-				{
-					Scan();
-					string pars = analyzer.ToString();
-					var rnd = new Random();
-					int volume = rnd.Next(25, 127), duration = rnd.Next(250, 2500);
-                    while (pars.IndexOf(":") > -1)
-                    {
-                        if ("h:" == pars)
-                        {
-                            Scan();  //preskoc h:
-                            analyzer.Check(Kind.NUMBER);
-                            volume = Convert.ToInt32(analyzer.ToString());
-							volume = CalcuateVolume(volume);
-                            Scan(); // preskoc cislo
-                        }
-                        else if ("d:" == pars)
-                        {
-                            Scan();  //preskoc d:
-                            analyzer.Check(Kind.NUMBER);
-                            duration = Convert.ToInt32(analyzer.ToString());
-                            Scan(); // preskoc cislo
-                        }
-                        pars = analyzer.ToString();
-                    }
-                    Syntax randomTone = new RandomTone(volume, duration);
-                    result.Add(randomTone);
-				}
-				
 				else if ("pauza" == keyword)
                 {
 					Scan();
@@ -613,5 +569,35 @@
             return code;
         }
 
+		private void SetToneParameters(ref int volume, ref int duration, ref int direction) 
+		{
+            string parameters = analyzer.ToString();
+            while (parameters.IndexOf(":") > -1)
+            {
+                if ("h:" == parameters)
+                {
+                    Scan();  //preskoc h:
+                    analyzer.Check(Kind.NUMBER);
+                    volume = Convert.ToInt32(analyzer.ToString());
+                    volume = CalcuateVolume(volume);
+                    Scan(); // preskoc cislo
+                }
+                else if ("s:" == parameters)
+                {
+                    Scan();  //preskoc s:
+                    analyzer.Check(Kind.NUMBER);
+                    direction = Convert.ToInt32(analyzer.ToString());
+                    Scan(); // preskoc cislo
+                }
+                else if ("d:" == parameters)
+                {
+                    Scan();  //preskoc d:
+                    analyzer.Check(Kind.NUMBER);
+                    duration = Convert.ToInt32(analyzer.ToString());
+                    Scan(); // preskoc cislo
+                }
+                parameters = analyzer.ToString();
+            }
+		}
     }
 }

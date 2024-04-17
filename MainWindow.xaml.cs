@@ -21,7 +21,7 @@
 		private int _caretPos;
 		private bool _isTextBoxFocused;
 		private CancellationTokenSource _cancelTokenSource;
-		private bool IsShiftPressed, IsCtrlPressed, IsAltPressed, DarkTheme;
+		private bool DarkTheme;
 		private static string CurrentFilePath = null;
 
 		public MainWindow()
@@ -61,15 +61,10 @@
 				"Ukončiť aplikáciu",
 				MessageBoxButton.YesNo);
 
-			if (MessageBoxResult.No == result)
+			if (MessageBoxResult.Yes == result)
             {
-				return;
+				OnSave(sender, e);
             }
-
-			if (!string.IsNullOrWhiteSpace(CurrentFilePath)) 
-			{
-
-			}
 
 			Application.Current.MainWindow.Close();
 			Application.Current.Shutdown(0);
@@ -78,7 +73,18 @@
 
 		private void OnNovyClick(object sender, RoutedEventArgs e)
         {
-			CodeTab.Clear();
+            MessageBoxResult result = MessageBox.Show(
+                "Neuložené zmeny môžu byť stratené.\r\n" +
+                "Stlačte Áno pre uloženie alebo Nie pre návrat do programu.",
+                "Nový program",
+                MessageBoxButton.YesNo);
+
+            if (MessageBoxResult.Yes == result)
+            {
+                OnSave(sender, e);
+            }
+
+            CodeTab.Text = "vlákno hlavné\r\n\r\nkoniec";
 			ErrorTab.Items.Clear();
 			SuggestionList.ItemsSource = null; //Enumerable.Empty<ItemsControl>();
 			CurrentFilePath = string.Empty;
@@ -134,7 +140,6 @@
 					ErrorTab.Focus();
 				}
 			}
-			IsShiftPressed = false;
 		}
 
 		private void OnSave(object sender, RoutedEventArgs e)
@@ -246,34 +251,16 @@
 
 		private void CodeTab_PreviewKeyDown(object sender, KeyEventArgs e)
         {
+			bool isCtrlPressed = (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl));
             switch (e.Key)
             {
-				case Key.LeftShift:
-				case Key.RightShift:
-					IsShiftPressed = true;
-					break;
-				case Key.LeftCtrl:
-				case Key.RightCtrl:
-					IsCtrlPressed = true;
-					break;
-				case Key.LeftAlt:
-				case Key.RightAlt:
-					IsAltPressed = true;
-					break;
 				case Key.Space:
-					if (!IsCtrlPressed)
-						break;
-					if (!CodeTab.IsFocused)
+					if (!isCtrlPressed || !CodeTab.IsFocused || !SuggestionList.HasItems)
 					{
-						return;
-					}
+                        break;
+                    }
 					_isTextBoxFocused = false;
 					_caretPos = CodeTab.CaretIndex;
-					if (!SuggestionList.HasItems)
-					{
-						SuggestionList.Focus();
-						return;
-					}
 					SuggestionList.SelectedIndex = 0;
 					ListViewItem item = SuggestionList.ItemContainerGenerator.ContainerFromIndex(0) as ListViewItem;
 					item.Focus();
@@ -285,23 +272,9 @@
 		
 		private void CodeTab_PreviewKeyUp(object sender, KeyEventArgs e)
 		{
+            bool isCtrlPressed = (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl));
             switch (e.Key)
             {
-				case Key.LeftShift:
-				case Key.RightShift:
-					IsShiftPressed = false;
-					break;
-
-				case Key.LeftCtrl:
-				case Key.RightCtrl:
-					IsCtrlPressed = false;
-					break;
-
-				case Key.LeftAlt:
-				case Key.RightAlt:
-					IsAltPressed = false;
-					break;
-
 				case Key.F1:
 					OnHelpClick(this, null);
 					break;
@@ -316,7 +289,7 @@
 					break;
 
 				case Key.H:
-					if (IsCtrlPressed)
+					if (isCtrlPressed)
                     {
 						int wordStartIndex = CodeTab.CaretIndex;
 						for (int i = CodeTab.CaretIndex; i > 0; i--)
@@ -342,14 +315,14 @@
 					break;
 
 				case Key.Subtract:
-					if (IsCtrlPressed)
+					if (isCtrlPressed)
                     {
 						DecreaseFontSize();
 					}						
 					break;
 
 				case Key.Add:
-					if (IsCtrlPressed)
+					if (isCtrlPressed)
                     {
 						IncreaseFontSize();
 					}					
@@ -428,7 +401,8 @@
 
         private async void PlayMusic()
         {
-			if (IsShiftPressed)
+            bool isShiftPressed = (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift));
+            if (isShiftPressed)
 			{
 				_cancelTokenSource.Cancel();
 				return;

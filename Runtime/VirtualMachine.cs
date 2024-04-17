@@ -223,7 +223,7 @@
 		private static void SetToneStop(int tone, int duration)
 		{
 			ChannelMessage message = new ChannelMessage(ChannelCommand.NoteOff, CHANNEL, tone, 0);
-            IMyMusicCommand command = new MyToneCommand(message, duration);
+            IMyMusicCommand command = new MyToneCommand(message, 1);
 			StoreCommand(command);
 		}
 
@@ -245,7 +245,7 @@
             {
                 messages[i] = new(ChannelCommand.NoteOff, CHANNEL, tones[i], 0);
             }
-            IMyMusicCommand command = new MyAccordCommand(messages, duration);
+            IMyMusicCommand command = new MyAccordCommand(messages, 1);
             StoreCommand(command);
         }
 
