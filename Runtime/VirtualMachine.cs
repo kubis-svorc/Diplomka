@@ -220,7 +220,7 @@
 			StoreCommand(command);
 		}
 
-		private static void SetToneStop(int tone, int duration)
+		private static void SetToneStop(int tone)
 		{
 			ChannelMessage message = new ChannelMessage(ChannelCommand.NoteOff, CHANNEL, tone, 0);
             IMyMusicCommand command = new MyToneCommand(message, 1);
@@ -238,7 +238,7 @@
             StoreCommand(command);
         }
 
-        private static void SetAccordStop(int[] tones, int duration)
+        private static void SetAccordStop(int[] tones)
         {
             ChannelMessage[] messages = new ChannelMessage[tones.Length];
             for (int i = 0; i < messages.Length; i++)
@@ -272,7 +272,7 @@
                     int duration = MEM[TOP];
                     TOP++;
                     SetTonePlay(tone, duration, volume);
-                    SetToneStop(tone, duration);
+                    SetToneStop(tone);
                     break;
 
                 case (int)Instruction.Accord:
@@ -291,7 +291,7 @@
                     duration = MEM[TOP];
                     TOP++;
                     SetAccordPlay(tones, duration, volume);
-                    SetAccordStop(tones, duration);
+                    SetAccordStop(tones);
                     break;
 
                 case (int)Instruction.Insturment:
@@ -333,9 +333,7 @@
                     PC++;
                     tone = new Random().Next(60, 85);
                     SetTonePlay(tone, duration, volume);
-                    SetToneStop(tone, duration);
-                    //TOP--;
-                    //MEM[TOP] = new Random().Next(60, 85);
+                    SetToneStop(tone);
                     break;
 
                 case (int)Instruction.Push:
