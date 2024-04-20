@@ -4,8 +4,9 @@
 	using Diplomka.Exceptions;
 	using Diplomka.Runtime;
 	using System.Linq;
+    using System;
 
-	internal class LexicalAnalyzer
+    internal class LexicalAnalyzer
 	{
 		public string input;
 
@@ -58,20 +59,24 @@
 				{
 					token.Append(look);
 					Next();
-
 				} while (char.IsNumber(look));
 				kind = Kind.NUMBER;
 			}
 			
-			else if (char.IsLetter(look) || look == ':')// || look == '#')
+			else if (char.IsLetter(look))// || look == '#')
 			{
 				do
 				{
-					token.Append(look);
+                    token.Append(look);
 					Next();
 
-				} while (char.IsLetter(look) || look == ':');// || look == '#');
+                } while (char.IsLetter(look) || char.IsNumber(look));// || look == '#');
 				kind = Kind.WORD;
+				if (':' == look)
+				{
+					token.Append(look);
+					Next();
+				}
 			}
 			
 			else if (look == '<' || look == '>' || look == '!' || look == '=')

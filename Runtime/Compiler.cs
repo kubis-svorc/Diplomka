@@ -1,10 +1,11 @@
-﻿namespace Diplomka.Runtime
-{
-    using Sanford.Multimedia.Midi;
-    using Diplomka.Analyzators;
-    using System;
-    using System.Security.Policy;
+﻿using Sanford.Multimedia.Midi;
+using Diplomka.Analyzators;
+using System;
+using System.Security.Policy;
+using System.Linq;
 
+namespace Diplomka.Runtime
+{
     public class Compiler
     {
         private LexicalAnalyzer analyzer;
@@ -574,27 +575,35 @@
             string parameters = analyzer.ToString();
             while (parameters.IndexOf(":") > -1)
             {
-                if ("h:" == parameters)
+                string number;
+                if (parameters.StartsWith("h:"))
                 {
-                    Scan();  //preskoc h:
+                    Scan();
+                    number = analyzer.ToString();
                     analyzer.Check(Kind.NUMBER);
-                    volume = Convert.ToInt32(analyzer.ToString());
+                    volume = Convert.ToInt32(number);
                     volume = CalcuateVolume(volume);
                     Scan(); // preskoc cislo
                 }
-                else if ("s:" == parameters)
+                else if (parameters.StartsWith("s:"))
                 {
-                    Scan();  //preskoc s:
+                    Scan();
+                    number = analyzer.ToString();
                     analyzer.Check(Kind.NUMBER);
-                    direction = Convert.ToInt32(analyzer.ToString());
+                    direction = Convert.ToInt32(number);
                     Scan(); // preskoc cislo
                 }
-                else if ("d:" == parameters)
+                else if (parameters.StartsWith("d:"))
                 {
-                    Scan();  //preskoc d:
+                    Scan();
+                    number = analyzer.ToString();
                     analyzer.Check(Kind.NUMBER);
-                    duration = Convert.ToInt32(analyzer.ToString());
+                    duration = Convert.ToInt32(number);
                     Scan(); // preskoc cislo
+                }
+                else 
+                {
+                    Scan();
                 }
                 parameters = analyzer.ToString();
             }
