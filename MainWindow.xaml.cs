@@ -6,7 +6,6 @@
     using System.Windows.Input;
     using Diplomka.Runtime;
     using Microsoft.Win32;
-    using Diplomka.Analyzators;
     using System.Linq;
     using System.Text.RegularExpressions;
     using System.Windows.Controls;
@@ -15,6 +14,7 @@
     using System.ComponentModel;
     using System.Windows.Automation;
     using System.Text;
+    using Diplomka.Analyzators.SyntaxNodes;
 
     public partial class MainWindow : Window
 	{

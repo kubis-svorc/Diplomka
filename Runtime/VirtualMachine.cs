@@ -7,6 +7,7 @@
     using System.Threading;
     using System.Threading.Tasks;
     using System.Linq;
+    using Diplomka.Analyzators.SyntaxNodes;    
 
     public class VirtualMachine 
 	{
@@ -26,7 +27,7 @@
 		
 		public static int CounterAddress = MemoryAllocSize - 1;
 		public static IDictionary<string, int> Variables;
-		public static IDictionary<string, Analyzators.Subroutine> Subroutines;
+		public static IDictionary<string, Subroutine> Subroutines;
 
 		public static ICollection<IMyMusicCommand> Thread1;
 		public static ICollection<IMyMusicCommand> Thread2;
@@ -41,7 +42,7 @@
 			PC = 0;
 			OUTDEVICE = new OutputDevice(DEVICE_ID);
 			Variables = new Dictionary<string, int>();
-			Subroutines = new Dictionary<string, Analyzators.Subroutine>();
+			Subroutines = new Dictionary<string, Subroutine>();
 
 			Thread1 = new LinkedList<IMyMusicCommand>();
 			Thread2 = new LinkedList<IMyMusicCommand>();
@@ -104,91 +105,20 @@
         {
             Sequence seq = new Sequence();
             Track track = new Track();
-            int ticks, timepos = 0;
-
-            foreach (var msg in Thread1)
-            {
-                timepos += msg.Duration;
-                ticks = (int)(timepos * seq.Division / 500F);
-                switch (msg)
-                {
-                    case MyToneCommand cmd:
-                        track.Insert(ticks, cmd.command);
-                        break;
-
-                    case MyAccordCommand acc:
-                        for (int i = 0; i < acc.commands.Length; i++)
-                        {
-                            track.Insert(ticks, acc.commands[i]);
-                        }
-                        break;
-                }
-            }
-
-            timepos = 0;
-            foreach (var msg in Thread2)
-            {
-                timepos += msg.Duration;
-                ticks = (int)(timepos * seq.Division / 500F);
-                switch (msg)
-                {
-                    case MyToneCommand cmd:
-                        track.Insert(ticks, cmd.command);
-                        break;
-
-                    case MyAccordCommand acc:
-                        for (int i = 0; i < 3; i++)
-                        {
-                            track.Insert(ticks, acc.commands[i]);
-                        }
-                        break;
-                }
-            }
-
-            timepos = 0;
-            foreach (var msg in Thread3)
-            {
-                timepos += msg.Duration;
-                ticks = (int)(timepos * seq.Division / 500F);
-                switch (msg)
-                {
-                    case MyToneCommand cmd:
-                        track.Insert(ticks, cmd.command);
-                        break;
-
-                    case MyAccordCommand acc:
-                        for (int i = 0; i < 3; i++)
-                        {
-                            track.Insert(ticks, acc.commands[i]);
-                        }
-                        break;
-                }
-            }
-
-            timepos = 0;
-            foreach (var msg in Thread4)
-            {
-                timepos += msg.Duration;
-                ticks = (int)(timepos * seq.Division / 500F);
-                switch (msg)
-                {
-                    case MyToneCommand cmd:
-                        track.Insert(ticks, cmd.command);
-                        break;
-
-                    case MyAccordCommand acc:
-                        for (int i = 0; i < 3; i++)
-                        {
-                            track.Insert(ticks, acc.commands[i]);
-                        }
-                        break;
-                }
-            }
+            InsertToTrack(ref track, ref Thread1);
+            InsertToTrack(ref track, ref Thread2);
+            InsertToTrack(ref track, ref Thread3);
+            InsertToTrack(ref track, ref Thread4);
 
             try
             {
                 seq.Add(track);
                 seq.Save(path);
+            }
+            catch (System.IO.IOException ex) 
+            {
+                Print("Pri zapisovaní súboru nastala chyba. Skontrolujte, či súbor nie  je otvorený");
+                Print("Chybová správa: " + ex.Message);
             }
             catch (Exception ex)
             {
@@ -209,7 +139,7 @@
         private static void SetInstrument(int instrumentCode)
         {
 			ChannelMessage message = new ChannelMessage(ChannelCommand.ProgramChange, CHANNEL, instrumentCode, 0);
-            IMyMusicCommand command = new MyToneCommand(message, 0);
+            IMyMusicCommand command = new MyToneCommand(message, 5);
 			StoreCommand(command);			
 		}
 
@@ -223,7 +153,7 @@
 		private static void SetToneStop(int tone)
 		{
 			ChannelMessage message = new ChannelMessage(ChannelCommand.NoteOff, CHANNEL, tone, 0);
-            IMyMusicCommand command = new MyToneCommand(message, 1);
+            IMyMusicCommand command = new MyToneCommand(message, 5);
 			StoreCommand(command);
 		}
 
@@ -245,7 +175,7 @@
             {
                 messages[i] = new(ChannelCommand.NoteOff, CHANNEL, tones[i], 0);
             }
-            IMyMusicCommand command = new MyAccordCommand(messages, 1);
+            IMyMusicCommand command = new MyAccordCommand(messages, 5);
             StoreCommand(command);
         }
 
@@ -565,5 +495,28 @@
                 }
             }
         }
-	}
+
+        private static void InsertToTrack(ref Track track, ref ICollection<IMyMusicCommand> collection) 
+        {
+            int ticks, timepos = 0;
+            foreach (IMyMusicCommand msg in collection)
+            {
+                ticks = (int)(timepos * 28 / 500F) + 1;
+                timepos += msg.Duration;
+                switch (msg)
+                {
+                    case MyToneCommand cmd:
+                        track.Insert(ticks, cmd.command);
+                        break;
+
+                    case MyAccordCommand acc:
+                        for (int i = 0; i < acc.commands.Length; i++)
+                        {
+                            track.Insert(ticks, acc.commands[i]);
+                        }
+                        break;
+                }
+            }
+        }
+    }
 }

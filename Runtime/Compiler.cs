@@ -1,8 +1,7 @@
 ﻿using Sanford.Multimedia.Midi;
 using Diplomka.Analyzators;
 using System;
-using System.Security.Policy;
-using System.Linq;
+using Diplomka.Analyzators.SyntaxNodes;
 
 namespace Diplomka.Runtime
 {
@@ -70,7 +69,7 @@ namespace Diplomka.Runtime
                         volume = VirtualMachine.DEFAULT_VOLUME;
                         duration = VirtualMachine.DEFAULT_DURATION;
                         SetToneParameters(ref volume, ref duration, ref direction);
-                        result.Add(new Analyzators.Tone(new Const(toneCode), new Const(duration), new Const(volume)));
+                        result.Add(new Analyzators.SyntaxNodes.Tone(new Const(toneCode), new Const(duration), new Const(volume)));
                     }					
 				}
 
@@ -605,6 +604,16 @@ namespace Diplomka.Runtime
                 {
                     Scan();
                 }
+
+                //if (volume <= 0)
+                //{
+                //    volume = 1;
+                //}
+                //if (duration <= 50)
+                //{
+                //    duration = 50;
+                //}
+
                 parameters = analyzer.ToString();
             }
 		}
