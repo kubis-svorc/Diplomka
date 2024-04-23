@@ -1,0 +1,250 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="Diplomka.Analyzators.SyntaxNodes.Accord" Collapsed="true">
+    <Position X="38.5" Y="5.5" Width="1.5" />
+    <InheritanceLine Type="Diplomka.Analyzators.SyntaxNodes.MidiCommand" FixedToPoint="true">
+      <Path>
+        <Point X="40.75" Y="5.191" />
+        <Point X="40.75" Y="5.812" />
+        <Point X="40" Y="5.812" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAQAAABAAAAAAAAAAAAAAAAAAAECAAAA=</HashCode>
+      <FileName>Analyzators\SyntaxNodes\Accord.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Diplomka.Analyzators.SyntaxNodes.Assign" Collapsed="true">
+    <Position X="33.25" Y="3.75" Width="1.5" />
+    <InheritanceLine Type="Diplomka.Analyzators.SyntaxNodes.Syntax" FixedFromPoint="true">
+      <Path>
+        <Point X="37.75" Y="4.312" />
+        <Point X="37.75" Y="4.816" />
+        <Point X="34" Y="4.816" />
+        <Point X="34" Y="4.441" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAgEAAAAA=</HashCode>
+      <FileName>Analyzators\SyntaxNodes\Assign.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Diplomka.Analyzators.SyntaxNodes.Block" Collapsed="true">
+    <Position X="31.5" Y="3.75" Width="1.5" />
+    <InheritanceLine Type="Diplomka.Analyzators.SyntaxNodes.Syntax" FixedFromPoint="true">
+      <Path>
+        <Point X="37.75" Y="4.312" />
+        <Point X="37.75" Y="4.816" />
+        <Point X="32.25" Y="4.816" />
+        <Point X="32.25" Y="4.441" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAIAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAEAAAAA=</HashCode>
+      <FileName>Analyzators\SyntaxNodes\Block.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Diplomka.Analyzators.SyntaxNodes.Call" Collapsed="true">
+    <Position X="35" Y="2.75" Width="1.5" />
+    <InheritanceLine Type="Diplomka.Analyzators.SyntaxNodes.Syntax" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="37.75" Y="3.75" />
+        <Point X="37.75" Y="3.595" />
+        <Point X="35.688" Y="3.595" />
+        <Point X="35.688" Y="3.441" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAA=</HashCode>
+      <FileName>Analyzators\SyntaxNodes\Call.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Diplomka.Analyzators.SyntaxNodes.Const" Collapsed="true">
+    <Position X="33.25" Y="6.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAA=</HashCode>
+      <FileName>Analyzators\SyntaxNodes\Const.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Diplomka.Analyzators.SyntaxNodes.ForLoop" Collapsed="true">
+    <Position X="31.5" Y="6.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAEAAEAA=</HashCode>
+      <FileName>Analyzators\SyntaxNodes\ForLoop.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Diplomka.Analyzators.SyntaxNodes.IfElse" Collapsed="true">
+    <Position X="33.25" Y="5.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAgAAAAAAAAAAAAAAAAAAAAAABAABAAAAEAAAAA=</HashCode>
+      <FileName>Analyzators\SyntaxNodes\IfElse.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Diplomka.Analyzators.SyntaxNodes.Instrument" Collapsed="true">
+    <Position X="39" Y="6.5" Width="1.5" />
+    <InheritanceLine Type="Diplomka.Analyzators.SyntaxNodes.MidiCommand" FixedToPoint="true">
+      <Path>
+        <Point X="40.75" Y="5.191" />
+        <Point X="40.75" Y="6.625" />
+        <Point X="40.5" Y="6.625" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAEAAA=</HashCode>
+      <FileName>Analyzators\SyntaxNodes\Instrument.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Diplomka.Analyzators.SyntaxNodes.MidiCommand" Collapsed="true">
+    <Position X="40" Y="4.5" Width="1.5" />
+    <InheritanceLine Type="Diplomka.Analyzators.SyntaxNodes.Syntax" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="38.5" Y="4" />
+        <Point X="39.263" Y="4" />
+        <Point X="39.263" Y="4.812" />
+        <Point X="40" Y="4.812" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Analyzators\SyntaxNodes\MidiCommand.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Diplomka.Analyzators.SyntaxNodes.Minus" Collapsed="true">
+    <Position X="41.5" Y="1.75" Width="1.5" />
+    <InheritanceLine Type="Diplomka.Analyzators.SyntaxNodes.UnaryOperation" FixedFromPoint="true">
+      <Path>
+        <Point X="40.5" Y="2.875" />
+        <Point X="40.875" Y="2.875" />
+        <Point X="40.875" Y="2.096" />
+        <Point X="41.5" Y="2.096" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAA=</HashCode>
+      <FileName>Analyzators\SyntaxNodes\Minus.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Diplomka.Analyzators.SyntaxNodes.Pause" Collapsed="true">
+    <Position X="41.5" Y="3.5" Width="1.5" />
+    <InheritanceLine Type="Diplomka.Analyzators.SyntaxNodes.UnaryOperation" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="40.5" Y="2.875" />
+        <Point X="40.875" Y="2.875" />
+        <Point X="40.875" Y="3.812" />
+        <Point X="41.5" Y="3.812" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAA=</HashCode>
+      <FileName>Analyzators\SyntaxNodes\Pause.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Diplomka.Analyzators.SyntaxNodes.Print" Collapsed="true">
+    <Position X="35" Y="5.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgEAAAAA=</HashCode>
+      <FileName>Analyzators\SyntaxNodes\Print.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Diplomka.Analyzators.SyntaxNodes.RandConst" Collapsed="true">
+    <Position X="33.25" Y="2.75" Width="1.5" />
+    <InheritanceLine Type="Diplomka.Analyzators.SyntaxNodes.Syntax" FixedFromPoint="true">
+      <Path>
+        <Point X="37.75" Y="3.75" />
+        <Point X="37.75" Y="3.595" />
+        <Point X="34" Y="3.595" />
+        <Point X="34" Y="3.441" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AEAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAA=</HashCode>
+      <FileName>Analyzators\SyntaxNodes\RandConst.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Diplomka.Analyzators.SyntaxNodes.RandomTone" Collapsed="true">
+    <Position X="41.5" Y="5.5" Width="1.5" />
+    <InheritanceLine Type="Diplomka.Analyzators.SyntaxNodes.MidiCommand" FixedToPoint="true">
+      <Path>
+        <Point X="40.75" Y="5.191" />
+        <Point X="40.75" Y="5.812" />
+        <Point X="41.5" Y="5.812" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAACgAAAAAAAAAAAAAAAAAAEAAAAA=</HashCode>
+      <FileName>Analyzators\SyntaxNodes\RandomTone.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Diplomka.Analyzators.SyntaxNodes.Subroutine" Collapsed="true">
+    <Position X="35" Y="6.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAIAAAAAAAAAAAAAAAAAgAAQAAQAAAAAAAAEAAAAA=</HashCode>
+      <FileName>Analyzators\SyntaxNodes\Subroutine.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Diplomka.Analyzators.SyntaxNodes.Syntax" Collapsed="true">
+    <Position X="37" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAA=</HashCode>
+      <FileName>Analyzators\SyntaxNodes\Syntax.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Diplomka.Analyzators.SyntaxNodes.ThreadCommand" Collapsed="true">
+    <Position X="35" Y="3.75" Width="1.5" />
+    <InheritanceLine Type="Diplomka.Analyzators.SyntaxNodes.Syntax" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="37.75" Y="4.312" />
+        <Point X="37.75" Y="4.816" />
+        <Point X="35.75" Y="4.816" />
+        <Point X="35.75" Y="4.441" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAEAAAAA=</HashCode>
+      <FileName>Analyzators\SyntaxNodes\ThreadCommand.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Diplomka.Analyzators.SyntaxNodes.Tone" Collapsed="true">
+    <Position X="41" Y="6.5" Width="1.5" />
+    <InheritanceLine Type="Diplomka.Analyzators.SyntaxNodes.MidiCommand" FixedToPoint="true">
+      <Path>
+        <Point X="40.75" Y="5.191" />
+        <Point X="40.75" Y="6.625" />
+        <Point X="41" Y="6.625" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAAgAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAECAAAA=</HashCode>
+      <FileName>Analyzators\SyntaxNodes\Tone.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Diplomka.Analyzators.SyntaxNodes.UnaryOperation" Collapsed="true">
+    <Position X="39" Y="2.5" Width="1.5" />
+    <InheritanceLine Type="Diplomka.Analyzators.SyntaxNodes.Syntax" FixedToPoint="true">
+      <Path>
+        <Point X="37.75" Y="3.75" />
+        <Point X="37.75" Y="2.875" />
+        <Point X="39" Y="2.875" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAA=</HashCode>
+      <FileName>Analyzators\SyntaxNodes\UnaryOperation.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Diplomka.Analyzators.SyntaxNodes.Variable" Collapsed="true">
+    <Position X="31.5" Y="2.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAIAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAEAAAAg=</HashCode>
+      <FileName>Analyzators\SyntaxNodes\Variable.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Diplomka.Analyzators.SyntaxNodes.WhileLoop" Collapsed="true">
+    <Position X="31.5" Y="5.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAEAAEAA=</HashCode>
+      <FileName>Analyzators\SyntaxNodes\WhileLoop.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

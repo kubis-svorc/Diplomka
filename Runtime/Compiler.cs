@@ -124,7 +124,7 @@ namespace Diplomka.Runtime
 				else if ("opakuj" == keyword)
 				{
 					Scan();
-					if ("kým" == keyword || "kym" == keyword)
+					if ("kým" == analyzer.ToString() || "kym" == analyzer.ToString())
 					{
 						Scan();
 						Syntax test = Compare();
@@ -288,7 +288,7 @@ namespace Diplomka.Runtime
 			else
             {
 				analyzer.Check(Kind.NUMBER);
-				result = new Const(System.Convert.ToInt32(analyzer.ToString()));
+				result = new Const(Convert.ToInt32(analyzer.ToString()));
 				Scan();
 			}			
 			return result;
@@ -605,14 +605,14 @@ namespace Diplomka.Runtime
                     Scan();
                 }
 
-                //if (volume <= 0)
-                //{
-                //    volume = 1;
-                //}
-                //if (duration <= 50)
-                //{
-                //    duration = 50;
-                //}
+                if (volume < 0)
+                {
+                    throw new Exceptions.SyntaxException($"Chyba v riadku {analyzer.row - 1} : Hlasitosť nemôže byť menšia ako 0");
+                }
+                if (duration <= 50)
+                {
+                    throw new Exceptions.SyntaxException($"Chyba v riadku {analyzer.row - 1} : dobra hrania musí byť aspoň 50 ms");
+                }
 
                 parameters = analyzer.ToString();
             }

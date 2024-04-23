@@ -34,11 +34,10 @@
 			VirtualMachine.Print = PrintInfo; 
 		}
 
-		public void PrintInfo(string message)
+        public void PrintInfo(string message)
 		{
-			//ErrorTab.Text += message + Environment.NewLine;
-			ErrorTab.Items.Add(new ListViewItem() { Content = message });
-		}
+			Application.Current.Dispatcher.Invoke(() => ErrorTab.Items.Add(message));	
+        }
 
 		public override void EndInit()
 		{
@@ -183,7 +182,7 @@
 			}
 		}
 
-		private async System.Threading.Tasks.Task StartExec(CancellationToken cancellationToken)
+		private async System.Threading.Tasks.Task StartExecAsync(CancellationToken cancellationToken)
 		{
 			VirtualMachine.Reset();
 			CodeTab.IsReadOnly = true;
@@ -196,8 +195,16 @@
 			// execution
 			VirtualMachine.SetJumpToProgramBody();
 			tree.Generate();
-			VirtualMachine.Start();
-			CodeTab.IsReadOnly = false;
+            CodeTab.IsReadOnly = false;
+			try
+			{
+                await VirtualMachine.StartAsync(cancellationToken);
+            }
+			catch (ApplicationException ex)
+			{
+
+				PrintInfo("Počas behu aplikácie došlo ku chybe: " + ex.Message);
+			}
 		}
 
 		private void FillSpacesForNVDA() 
@@ -411,7 +418,7 @@
 			{
                 ErrorTab.Items.Clear();
                 _cancelTokenSource = new CancellationTokenSource();
-				await StartExec(_cancelTokenSource.Token);
+				await StartExecAsync(_cancelTokenSource.Token);
 				await VirtualMachine.Play(_cancelTokenSource.Token);
 			}
 			catch (Exception)
@@ -535,6 +542,11 @@
 
 				case Key.Enter:
 				case Key.Space:
+					if (ErrorTab.Items.IsEmpty)
+					{
+						CodeTab.Focus();
+						break;
+					}
 					int index = GetCaretIndexForError(ErrorTab.SelectedItem.ToString());
 					if (-1 != index)
 					{

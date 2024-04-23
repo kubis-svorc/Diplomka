@@ -7,10 +7,14 @@
     using System.Threading;
     using System.Threading.Tasks;
     using System.Linq;
-    using Diplomka.Analyzators.SyntaxNodes;    
+    using Diplomka.Analyzators.SyntaxNodes;
+  
 
     public class VirtualMachine 
 	{
+        private const int CAPACITY_LIMITER = 10_000;
+        private static int CAPACITY_COUNTER = 10_000;
+        private static int LOOP_COUNTER = 100_000;
 		private const int DEVICE_ID = 0, MemoryAllocSize = 0x10000; // memory alloc
 		public delegate void PrinterFunc(string msg);
 		public static PrinterFunc Print;
@@ -55,6 +59,7 @@
 		{
 			PC = 0;
 			ADR = 0;
+            CAPACITY_COUNTER = 100_000;
             Array.Clear(MEM);
 
             TERMINATED = false;
@@ -66,7 +71,7 @@
 			Thread2.Clear();
 			Thread3.Clear();
 			Thread4.Clear();
-
+            LOOP_COUNTER = 100_000;
 			OUTDEVICE.Reset();
         }
 
@@ -76,12 +81,15 @@
 			ADR++;
 		}
 
-        public static void Start()
+        public static async Task StartAsync(CancellationToken cancellationToken)
         {
-			while (!TERMINATED)
-			{
-				Execute();
-			}
+            await Task.Run(() =>
+            {
+                while (!(TERMINATED || cancellationToken.IsCancellationRequested))
+                {
+                    Execute();
+                }
+            }, cancellationToken);
 		}
 
         public static async Task Play(CancellationToken cancellationToken)
@@ -148,7 +156,12 @@
 			ChannelMessage message = new ChannelMessage(ChannelCommand.NoteOn, CHANNEL, tone, volume);
             IMyMusicCommand command = new MyToneCommand(message, duration);
 			StoreCommand(command);
-		}
+            CAPACITY_COUNTER--;
+            if (CAPACITY_COUNTER == 0)
+            {
+                throw new Exceptions.ThreadExceededException("Bola presiahnutá kapacita tónov vo vlákne");
+            }
+        }
 
 		private static void SetToneStop(int tone)
 		{
@@ -166,6 +179,11 @@
             }
             IMyMusicCommand command = new MyAccordCommand(messages, duration);
             StoreCommand(command);
+            CAPACITY_COUNTER--;
+            if (CAPACITY_COUNTER == 0)
+            {
+                throw new Exceptions.ThreadExceededException("Bola presiahnutá kapacita tónov vo vlákne");
+            }
         }
 
         private static void SetAccordStop(int[] tones)
@@ -191,6 +209,12 @@
         private static void Execute()
         {
             int index;
+            LOOP_COUNTER--;
+            if (LOOP_COUNTER == 0)
+            {
+                Print("Upozornenie: Program beží príliš dlho, presiahol počet inštrukcií!");
+                return;
+            }
             switch (MEM[PC])
             {
                 case (int)Instruction.Sound:
@@ -395,6 +419,7 @@
                 case (int)Instruction.Thrd:
                     PC++;
                     CHANNEL++;
+                    CAPACITY_COUNTER = CAPACITY_LIMITER;
                     break;
 
                 case (int)Instruction.Pause:

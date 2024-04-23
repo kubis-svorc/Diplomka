@@ -1,0 +1,6 @@
+﻿vlakno hlavné 
+opakuj 5 krat  
+hraj náhodný  d:500 h:50 
+hraj  c d:500 h:50 
+koniec 
+koniec
