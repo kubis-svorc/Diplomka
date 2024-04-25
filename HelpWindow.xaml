@@ -117,7 +117,34 @@
                 </ListViewItem.Content>
             </ListViewItem>
 
-
+            <ListViewItem>
+                <ListViewItem.Content>
+                    <TextBlock>
+                        opakuj kým podmienka ... koniec - 
+                        <LineBreak/> Postupnosť príkazov v tele cyklu sa vykonáva, kým sa podmienka vyhodnocuje ako splnená.
+                        <LineBreak/> POZOR: treba byť opatrný, aby podmienka nebola splnená nekonečne dlho, lebo sa program zasekne (zacyklí)!
+                        <LineBreak/> podmienka - výraz matematického porovnania (väčší, menší, rovný a podobne).
+                        <LineBreak/> Koniec tela takéhoto cyklu musí byť označený slovo koniec
+                    </TextBlock>
+                </ListViewItem.Content>
+            </ListViewItem>
+            <ListViewItem AutomationProperties.Name="Príklad cyklu : zahrá 2 krát postupne tóny c1, e1 a g1"
+                  AutomationProperties.HelpText="Príklad cyklu : zahrá 2 krát postupne tóny c1, e1 a g1">
+                <ListViewItem.Content>
+                    <TextBlock>
+                        pocitadlo = -5
+                        <LineBreak/> opakuj kým pocitadlo &lt; 10
+                        <LineBreak/> hraj c1
+                        <LineBreak/> hraj e1
+                        <LineBreak/> hraj g1
+                        <LineBreak/> pocitadlo = pocitadlo + 1
+                        <LineBreak/> koniec
+                        <LineBreak/>POZOR! Ak by sme nemenili hodnotu pocidalo, cyklus by išiel neobmedzene dlho                       
+                    </TextBlock>
+                </ListViewItem.Content>
+            </ListViewItem>
+            
+            
             <ListViewItem>
                 <ListViewItem.Content>
                     <TextBlock>
@@ -257,7 +284,7 @@
             <ListViewItem>
                 <ListViewItem.Content>
                     <TextBlock>
-                        nahodny - vygeneruje náhodný tón s náhodnou hlasitosťou (od 0 do 100) a náhodnou dobou (od 250 do 2500).
+                        hraj nahodny - vygeneruje náhodný tón s náhodnou hlasitosťou (od 0 do 100) a náhodnou dobou (od 250 do 2500).
                         <LineBreak/> Môžeme však generovať aj náhodný tón s danou hlasitosťou a dĺžkou:
                         <LineBreak/> d: dĺžka
                         <LineBreak/> h: hlasitosť
