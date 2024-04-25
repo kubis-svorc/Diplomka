@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="MusIK"
-        x:Name="MyWindow" Width="800" Height="650">
+        x:Name="MyWindow" Width="800" Height="650"
+        KeyDown="MyWindow_KeyDown">
 
     <Window.CommandBindings>
         <CommandBinding Command="Open"  Executed="OnOpenFile"/>
@@ -93,6 +94,6 @@
                       PreviewKeyDown="SuggestionList_PreviewKeyDown" FontSize="10" AutomationProperties.Name="Ponuka príkazov"/>
 
         <ListView VerticalAlignment="Top" Grid.Row="3"
-                 Height="72" x:Name="ErrorTab" FontSize="10" AutomationProperties.Name="Panel s hláseniami" PreviewKeyUp="ErrorTab_PreviewKeyUp" />
+                 Height="72" x:Name="ErrorTab" FontSize="10" AutomationProperties.Name="Panel s hláseniami" PreviewKeyDown="ErrorTab_PreviewKeyDown" />
     </Grid>
 </Window>

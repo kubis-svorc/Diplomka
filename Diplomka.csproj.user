@@ -13,9 +13,15 @@
     <Compile Update="HelpWindow.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="LineNavigationDialog.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Page Update="HelpWindow.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="LineNavigationDialog.xaml">
       <SubType>Designer</SubType>
     </Page>
     <Page Update="MainWindow.xaml">

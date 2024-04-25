@@ -15,6 +15,7 @@
     using System.Windows.Automation;
     using System.Text;
     using Diplomka.Analyzators.SyntaxNodes;
+    using System.CodeDom;
 
     public partial class MainWindow : Window
 	{
@@ -31,13 +32,13 @@
 			_cancelTokenSource = new CancellationTokenSource();
 			_isTextBoxFocused = true;
 			CodeTab.Focus();
-			VirtualMachine.Print = PrintInfo; 
+			VirtualMachine.Print = PrintInfo;
 		}
 
-        public void PrintInfo(string message)
+		public void PrintInfo(string message)
 		{
-			Application.Current.Dispatcher.Invoke(() => ErrorTab.Items.Add(message));	
-        }
+			Application.Current.Dispatcher.Invoke(() => ErrorTab.Items.Add(message));
+		}
 
 		public override void EndInit()
 		{
@@ -45,13 +46,13 @@
 			CodeTab.Focus();
 		}
 
-        protected override void OnClosing(CancelEventArgs e)
-        {
+		protected override void OnClosing(CancelEventArgs e)
+		{
 			Application.Current.Shutdown(0);
 			Environment.Exit(0);
-        }
+		}
 
-        private void OnExitClick(object sender, RoutedEventArgs e)
+		private void OnExitClick(object sender, RoutedEventArgs e)
 		{
 			MessageBoxResult result = MessageBox.Show(
 				"Ste si istý, že chcete ukončiť aplikáciu?\r\n" +
@@ -61,9 +62,9 @@
 				MessageBoxButton.YesNo);
 
 			if (MessageBoxResult.Yes == result)
-            {
+			{
 				OnSave(sender, e);
-            }
+			}
 
 			Application.Current.MainWindow.Close();
 			Application.Current.Shutdown(0);
@@ -71,27 +72,27 @@
 		}
 
 		private void OnNovyClick(object sender, RoutedEventArgs e)
-        {
-            MessageBoxResult result = MessageBox.Show(
-                "Neuložené zmeny môžu byť stratené.\r\n" +
-                "Stlačte Áno pre uloženie alebo Nie pre návrat do programu.",
-                "Nový program",
-                MessageBoxButton.YesNo);
+		{
+			MessageBoxResult result = MessageBox.Show(
+				"Neuložené zmeny môžu byť stratené.\r\n" +
+				"Stlačte Áno pre uloženie alebo Nie pre pokračovanie bez uloženia.",
+				"Nový program",
+				MessageBoxButton.YesNo);
 
-            if (MessageBoxResult.Yes == result)
-            {
-                OnSave(sender, e);
-            }
+			if (MessageBoxResult.Yes == result)
+			{
+				OnSave(sender, e);
+			}
 
-            CodeTab.Text = "vlákno hlavné\r\n\r\nkoniec";
+			CodeTab.Text = "vlákno hlavné\r\n\r\nkoniec";
 			ErrorTab.Items.Clear();
 			SuggestionList.ItemsSource = null; //Enumerable.Empty<ItemsControl>();
 			CurrentFilePath = string.Empty;
-        }
+		}
 
 		private void OnOpenFile(object sender, RoutedEventArgs e)
-        {
-			var dialog = new OpenFileDialog 
+		{
+			var dialog = new OpenFileDialog
 			{
 				InitialDirectory = "C:\\",
 				Filter = "Text Files|*.txt|All Files|*.*",
@@ -99,24 +100,24 @@
 			};
 
 			if (dialog.ShowDialog().Value)
-            {
+			{
 				string textPath = dialog.FileName;
 				CurrentFilePath = Path.Combine(
-                    Path.GetDirectoryName(textPath),
-                    Path.GetFileNameWithoutExtension(textPath));
-				try 
+					Path.GetDirectoryName(textPath),
+					Path.GetFileNameWithoutExtension(textPath));
+				try
 				{
 					CodeTab.Text = File.ReadAllText(textPath);
 				}
-                catch (IOException ex)
-                {
+				catch (IOException ex)
+				{
 					ErrorTab.Items.Add(new ListViewItem() { Content = $"Nebolo možné otvoriť súbor: {ex.Message}" });
-                }
+				}
 			}
-        }
+		}
 
 		private void OnSaveAs(object sender, RoutedEventArgs e)
-        {
+		{
 			var dialog = new SaveFileDialog
 			{
 				InitialDirectory = "C:\\",
@@ -130,7 +131,7 @@
 				try
 				{
 					VirtualMachine.SaveMIDI(midiPath);
-                    File.WriteAllText(textPath, CodeTab.Text, Encoding.UTF8);
+					File.WriteAllText(textPath, CodeTab.Text, Encoding.UTF8);
 				}
 				catch (Exception ex)
 				{
@@ -144,10 +145,10 @@
 		private void OnSave(object sender, RoutedEventArgs e)
 		{
 			if (string.IsNullOrWhiteSpace(CurrentFilePath))
-            {
+			{
 				OnSaveAs(sender, e);
 				return;
-            }
+			}
 
 			string textPath = string.Concat(CurrentFilePath, ".txt");
 			string midiPath = string.Concat(CurrentFilePath, ".midi");
@@ -159,23 +160,23 @@
 			}
 			catch (Exception ex)
 			{
-				ErrorTab.Items.Add(new ListViewItem() { Content = ex.Message });	
+				ErrorTab.Items.Add(new ListViewItem() { Content = ex.Message });
 				ErrorTab.Focus();
-			}			
+			}
 		}
-				
+
 		private Syntax Compile()
 		{
 			var compiler = new Compiler(CodeTab.Text.ToLower());
 			try
 			{
 				Syntax syntaxTree = compiler.Parse();
-                return syntaxTree;
+				return syntaxTree;
 			}
 			catch (Exception ex)
 			{
 				//ErrorTab.Text += "Kompilácia neprebehla úspešne..." + Environment.NewLine;
-				ErrorTab.Items.Add("Chyba pri spúšťaní programu...");
+				ErrorTab.Items.Add(new ListViewItem() { Content = "Chyba pri spúšťaní programu..." });
 				ErrorTab.Items.Add(new ListViewItem() { Content = ex.Message });
 				_ = ErrorTab.Focus();
 				return null;
@@ -186,7 +187,7 @@
 		{
 			VirtualMachine.Reset();
 			CodeTab.IsReadOnly = true;
-			Syntax tree = Compile();			
+			Syntax tree = Compile();
 			if (null == tree)
 			{
 				CodeTab.IsReadOnly = false;
@@ -195,11 +196,11 @@
 			// execution
 			VirtualMachine.SetJumpToProgramBody();
 			tree.Generate();
-            CodeTab.IsReadOnly = false;
+			CodeTab.IsReadOnly = false;
 			try
 			{
-                await VirtualMachine.StartAsync(cancellationToken);
-            }
+				await VirtualMachine.StartAsync(cancellationToken);
+			}
 			catch (ApplicationException ex)
 			{
 
@@ -207,157 +208,119 @@
 			}
 		}
 
-		private void FillSpacesForNVDA() 
+		private void FillSpacesForNVDA()
 		{
-            int indexCaret = CodeTab.CaretIndex;
-            string replacedText = Regex.Replace(CodeTab.Text, @"(?<! )\r\n", " \r\n");
-            if (replacedText != CodeTab.Text)
-            {
-                CodeTab.Text = replacedText;
-                CodeTab.CaretIndex = indexCaret;
-            }
-        }
+			int indexCaret = CodeTab.CaretIndex;
+			string replacedText = Regex.Replace(CodeTab.Text, @"(?<! )\r\n", " \r\n");
+			if (replacedText != CodeTab.Text)
+			{
+				CodeTab.Text = replacedText;
+				CodeTab.CaretIndex = indexCaret;
+			}
+		}
 
-        private void UpdateSuggestionList() 
+		private void UpdateSuggestionList()
 		{
-            var builder = new StringBuilder();
+			var builder = new StringBuilder();
 			int i = CodeTab.CaretIndex - 1;
-            //while (i >= 0 && !char.IsWhiteSpace(CodeTab.Text[i])) 
-            //{
-            //	builder.Insert(0, CodeTab.Text[i]);
-            //	i--;
-            //}
-            while (i >= 0 && char.IsLetterOrDigit(CodeTab.Text[i]))
-            {
-                builder.Insert(0, CodeTab.Text[i]);
-                i--;
-            }
+			while (i >= 0 && char.IsLetterOrDigit(CodeTab.Text[i]))
+			{
+				builder.Insert(0, CodeTab.Text[i]);
+				i--;
+			}
 
-            string wordUnderCaret = builder.ToString();
-			if (wordUnderCaret.Length < 2) 
+			string wordUnderCaret = builder.ToString();
+			if (wordUnderCaret.Length < 2)
 			{
 				wordUnderCaret = string.Empty;
 			}
-            string[] suggestions = Wrappers
-                .KeywordContainer
-                .Keywords
-                .Where(kw => Regex.IsMatch(kw, wordUnderCaret))
-                .ToArray();
-            SuggestionList.ItemsSource = suggestions;
-        }
-		
+			string[] suggestions = Wrappers
+				.KeywordContainer
+				.Keywords
+				.Where(kw => Regex.IsMatch(kw, wordUnderCaret))
+				.ToArray();
+			SuggestionList.ItemsSource = suggestions;
+		}
+
 		private void CodeTab_KeyUp(object sender, KeyEventArgs e)
 		{
-			if (!_isTextBoxFocused) 
+			if (!_isTextBoxFocused)
 			{
 				return;
 			}
 			FillSpacesForNVDA();
-			UpdateSuggestionList();            
+			UpdateSuggestionList();
 		}
 
 		private void CodeTab_PreviewKeyDown(object sender, KeyEventArgs e)
-        {
+		{
 			bool isCtrlPressed = (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl));
-            switch (e.Key)
-            {
+			switch (e.Key)
+			{
 				case Key.Space:
 					if (!isCtrlPressed || !CodeTab.IsFocused || !SuggestionList.HasItems)
 					{
-                        break;
-                    }
+						break;
+					}
 					_isTextBoxFocused = false;
 					_caretPos = CodeTab.CaretIndex;
 					SuggestionList.SelectedIndex = 0;
 					ListViewItem item = SuggestionList.ItemContainerGenerator.ContainerFromIndex(0) as ListViewItem;
-					item.Focus();
+					if (item != null)
+					{
+						item.Focus();
+					}
+					e.Handled = true;
 					break;
 				default:
 					break;
-            }
-        }
-		
+			}
+
+		}
+
 		private void CodeTab_PreviewKeyUp(object sender, KeyEventArgs e)
 		{
-            bool isCtrlPressed = (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl));
-            switch (e.Key)
-            {
-				case Key.F1:
-					OnHelpClick(this, null);
-					break;
-
-				case Key.F5:
-					PlayMusic();
-					break;
-
-				case Key.F6:
-					ErrorTab.Items.Refresh();
-					ErrorTab.Focus();					
-					break;
-
+			bool isCtrlPressed = (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl));
+			switch (e.Key)
+			{
 				case Key.H:
 					if (isCtrlPressed)
-                    {
-						int wordStartIndex = CodeTab.CaretIndex;
-						for (int i = CodeTab.CaretIndex; i > 0; i--)
-                        {
-							if (!char.IsWhiteSpace(CodeTab.Text[i]))
-                            {
-								wordStartIndex = i;
-                            }
-							else
-                            {
-								break;
-                            }
-                        }
+					{
+						e.Handled = true;
 						AutomationProperties.SetName(CodeTab, string.Empty);
-						CodeTab.CaretIndex = FindNextHeading(CodeTab.Text, wordStartIndex);
-						int row = CodeTab.GetLineIndexFromCharacterIndex(CodeTab.CaretIndex);
-						string name = CodeTab.GetLineText(row);
-						Focus();
-						CodeTab.Focus();
+						if (!FindNextHeading(CodeTab.Text, CodeTab.CaretIndex)) 
+						{
+							CodeTab.CaretIndex = 0;
+							_caretPos = 0;
+							FindNextHeading(CodeTab.Text, -1);
+                        }
 						Keyboard.Focus(CodeTab);
-						AutomationProperties.SetName(CodeTab, name);
+                        CodeTab.Focus();
                     }
 					break;
-
-				case Key.Subtract:
-					if (isCtrlPressed)
-                    {
-						DecreaseFontSize();
-					}						
-					break;
-
-				case Key.Add:
-					if (isCtrlPressed)
-                    {
-						IncreaseFontSize();
-					}					
-					break;
-
 				default:
 					break;
-            }
+			}
 		}
-		
+
 		private void IncreaseFontSize()
-        {
+		{
 			if (CodeTab.FontSize >= 20)
-            {
+			{
 				return;
-            }
+			}
 			CodeTab.FontSize++;
 			ErrorTab.FontSize++;
 			SuggestionList.FontSize++;
 			LineNumerator.FontSize++;
 		}
 
-        private void DecreaseFontSize()
-        {
+		private void DecreaseFontSize()
+		{
 			if (CodeTab.FontSize <= 8)
-            {
+			{
 				return;
-            }
+			}
 			CodeTab.FontSize--;
 			ErrorTab.FontSize--;
 			SuggestionList.FontSize--;
@@ -365,16 +328,16 @@
 		}
 
 		private void SwitchTheme(object sender, RoutedEventArgs e)
-        {
+		{
 			DarkTheme = !DarkTheme;
 			Brush text, bg;
 			if (DarkTheme)
-            {
+			{
 				text = Brushes.White;
 				bg = Brushes.Black;
 				ColorSwitcher.Header = "Svetlý _režim";
 			}
-			else 
+			else
 			{
 				text = Brushes.Black;
 				bg = Brushes.White;
@@ -393,31 +356,31 @@
 			LineNumerator.Foreground = text;
 			LineNumerator.Background = bg;
 		}
-	
+
 		private void CodeTab_TextChanged(object sender, TextChangedEventArgs e)
-        {
+		{
 			UpdateLineNumerator();
-        }
+		}
 
 		private void UpdateLineNumerator()
-        {
+		{
 			var regex = new Regex(Environment.NewLine);
 			int lineCount = regex.Matches(CodeTab.Text).Count + 1;
 			LineNumerator.Text = string.Join(Environment.NewLine, Enumerable.Range(1, lineCount).Select(i => i.ToString().PadLeft(3) + "  "));
 		}
 
-        private async void PlayMusic()
-        {
-            bool isShiftPressed = (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift));
-            if (isShiftPressed)
+		private async void PlayMusic()
+		{
+			bool isShiftPressed = (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift));
+			if (isShiftPressed)
 			{
 				_cancelTokenSource.Cancel();
 				return;
 			}
 			try
 			{
-                ErrorTab.Items.Clear();
-                _cancelTokenSource = new CancellationTokenSource();
+				ErrorTab.Items.Clear();
+				_cancelTokenSource = new CancellationTokenSource();
 				await StartExecAsync(_cancelTokenSource.Token);
 				await VirtualMachine.Play(_cancelTokenSource.Token);
 			}
@@ -427,84 +390,68 @@
 			}
 		}
 
-        private void OnHelpClick(object sender, RoutedEventArgs e)
-        {
+		private void OnHelpClick(object sender, RoutedEventArgs e)
+		{
 			var window = new HelpWindow(DarkTheme)
 			{
 				Owner = this
 			};
 			window.ShowDialog();
-        }
+		}
 
-        private void CodeTab_LostFocus(object sender, RoutedEventArgs e)
-        {
+		private void CodeTab_LostFocus(object sender, RoutedEventArgs e)
+		{
 			AutomationProperties.SetName(CodeTab, "Kód");
-        }
+		}
 
-        private void OnPlayClick(object sender, RoutedEventArgs e)
+		private void OnPlayClick(object sender, RoutedEventArgs e)
 		{
 			PlayMusic();
 		}
 
-		private int FindNextHeading(string text, int caret)
-        {
+		private bool FindNextHeading(string text, int caret)
+		{
 			MatchCollection matches = Wrappers.KeywordContainer.RegexObj.Matches(text);
-			var depth = 0;
-			var currentDept = 0;
-			var nearestIndex = 0;
-
-            foreach (Match match in matches)
-            {
-				if (match.Index == caret)
-                {
+			var currentDept = 1;
+			bool found = false;
+			foreach (Match match in matches)
+			{
+				if (match.Index > caret && match.Value != "koniec")
+				{
+					string name = $"Riadok: {CodeTab.GetLineIndexFromCharacterIndex(match.Index) + 1}, slovo: {match.Value}, úroveň:  {currentDept}";
+					CodeTab.CaretIndex = match.Index;
+					PrintInfo(name);
+					ErrorTab.Focus();
+					AutomationProperties.SetName(CodeTab, name);
+					CodeTab.Focus();
+					found = true;
 					break;
-                }
+				}
 				else if ("opakuj" == match.Value
 					|| "ak" == match.Value
 					|| "inak" == match.Value
 					|| "urob" == match.Value
-					|| "vlakno" == match.Value)
+					|| "vlakno" == match.Value
+					|| "vlákno" == match.Value)
 				{
 					currentDept++;
 				}
 				else if ("koniec" == match.Value)
-                {
-					currentDept--;
-                }
-            }
-
-            foreach (Match match in matches)
-            {
-				if ("opakuj" == match.Value 
-					|| "ak" == match.Value 
-					|| "inak" == match.Value 
-					|| "urob" == match.Value 
-					|| "vlakno" == match.Value)
-                {
-					depth++;
-                }
-				else if ("koniec" == match.Value)
-                {
-					depth--;
-                }
-
-				if (match.Index > caret && currentDept == depth)
 				{
-					nearestIndex = match.Index;
-					break;
+					currentDept--;
 				}
 			}
-			return nearestIndex;
-        }
+			return found;
+		}
 
 		private void SuggestionList_PreviewKeyDown(object sender, KeyEventArgs e)
 		{
 			if (Key.Enter == e.Key || Key.Space == e.Key)
 			{
-                if (SuggestionList.SelectedItem != null)
-                {
+				if (SuggestionList.SelectedItem != null)
+				{
 
-                    while (0 < _caretPos && !char.IsWhiteSpace(CodeTab.Text[_caretPos - 1])) 
+					while (0 < _caretPos && !char.IsWhiteSpace(CodeTab.Text[_caretPos - 1]))
 					{
 						_caretPos--;
 					}
@@ -515,36 +462,43 @@
 					sb.Insert(_caretPos + selectedValue.Length, " ");
 					CodeTab.Text = sb.ToString();
 					_caretPos += selectedValue.Length + 1;
-                    goto FocusCodeTab;
-                }
+					goto FocusCodeTab;
+				}
 			}
-			else if (Key.Escape == e.Key) 
+			else if (Key.Escape == e.Key)
 			{
 				goto FocusCodeTab;
 			}
 			return;
-			
-		FocusCodeTab:
+
+			FocusCodeTab:
 			_isTextBoxFocused = true;
 			CodeTab.CaretIndex = _caretPos;
-			CodeTab.Focus();			
-			return;	
-        }
+			CodeTab.Focus();
+			return;
+		}
 
-        private void ErrorTab_PreviewKeyUp(object sender, KeyEventArgs e)
-        {
-            switch (e.Key)
-            {
+		private void ErrorTab_PreviewKeyDown(object sender, KeyEventArgs e)
+		{
+			switch (e.Key)
+			{
 				case Key.Escape:
-				case Key.F6:					
+				case Key.F6:
+					e.Handled = true;
 					CodeTab.Focus();
 					break;
 
 				case Key.Enter:
 				case Key.Space:
-					if (ErrorTab.Items.IsEmpty)
+                    e.Handled = true;
+                    if (ErrorTab.Items.IsEmpty)
 					{
 						CodeTab.Focus();
+						break;
+					}
+					if (null == ErrorTab.SelectedItem)
+					{
+						ErrorTab.SelectedIndex = 0;
 						break;
 					}
 					int index = GetCaretIndexForError(ErrorTab.SelectedItem.ToString());
@@ -555,10 +509,10 @@
 						CodeTab.Focus();
 					}
 					break;
-                default:
-                    break;
-            }
-        }
+				default:
+					break;
+			}
+		}
 
 		private int GetCaretIndexForError(string row)
 		{
@@ -575,11 +529,101 @@
 			{
 				return -1;
 			}
-			else if (rowIndex >= matches.Count) 
+			else if (rowIndex >= matches.Count)
 			{
 				return matches[matches.Count - 1].Index;
 			}
 			return matches[rowIndex].Index;
+		}
+
+		private void MyWindow_KeyDown(object sender, KeyEventArgs e)
+		{
+			bool isCtrlPressed = (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl));
+			switch (e.Key)
+			{
+
+				case Key.F1:
+					e.Handled = true;
+					OnHelpClick(this, null);
+					break;
+
+                case Key.F5:
+                    PlayMusic();
+                    break;
+
+                case Key.F6:
+                    ErrorTab.Items.Refresh();
+                    if (ErrorTab.Items.IsEmpty)
+                    {
+						CodeTab.Focus();
+                        e.Handled = true;
+                        break;
+                    }
+                    ErrorTab.SelectedIndex = 0;
+                    var item = ErrorTab.Items[0] as ListViewItem;
+                    if (item != null)
+                    {
+                        if (!item.Focus()) 
+						{
+							ErrorTab.Focus();
+						}
+                    }
+                    e.Handled = true;
+                    break;
+
+                case Key.G:
+                    if (isCtrlPressed) 
+					{
+                        e.Handled = true;
+                        OnSHhowLineDialog();
+                    }
+					break;
+
+                case Key.Subtract:
+                    if (isCtrlPressed)
+                    {
+                        e.Handled = true;
+                        DecreaseFontSize();
+                    }
+                    break;
+
+                case Key.Add:
+                    if (isCtrlPressed)
+                    {
+						e.Handled = true;
+                        IncreaseFontSize();
+                    }
+                    break;
+
+                default:
+					break;
+			}
+		}
+
+		private void OnSHhowLineDialog() 
+		{
+			var dialogWindow = new LineNavigationDialog(DarkTheme)
+			{
+				Owner = this
+			};
+			bool? hasResult = dialogWindow.ShowDialog();
+			if (true == hasResult) 
+			{
+				int line;
+				if (int.TryParse(dialogWindow.Result, out line)) 
+				{
+					if (line < 0 || line > CodeTab.LineCount)
+					{
+						MessageBox.Show("Zadané číslo riadka je mimo počtu riadkov alebo záporné", "Chybné číslo riadku", MessageBoxButton.OK, MessageBoxImage.Error);
+						return;
+					}
+					int row = Math.Min(Math.Max(0, line - 1), CodeTab.LineCount - 1);
+                    CodeTab.ScrollToLine(row); // Presun na zvolený riadok
+                    CodeTab.Select(CodeTab.GetCharacterIndexFromLineIndex(row), 0);
+					return;
+                }
+				MessageBox.Show("Zadané číslo nebolo platné", "Chybné číslo riadku", MessageBoxButton.OK, MessageBoxImage.Error);
+			}
 		}
     }
 }

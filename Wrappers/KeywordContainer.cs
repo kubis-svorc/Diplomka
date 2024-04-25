@@ -29,7 +29,6 @@
                 "opakuj", "ak", "inak", "urob", "vlakno", "vlákno", "koniec"
             };
 
-            //HeaderPattern = string.Join("|", Headers.Select(Regex.Escape));
             System.Text.StringBuilder stringBuilder = new System.Text.StringBuilder();
             int i = 0;
             foreach (string word in Headers)
@@ -43,7 +42,6 @@
                 }
             }
             RegexObj = new Regex(stringBuilder.ToString());
-
         }
     }
 }
