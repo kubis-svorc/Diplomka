@@ -13,8 +13,8 @@
     public class VirtualMachine 
 	{
         private const int CAPACITY_LIMITER = 10_000;
-        private static int CAPACITY_COUNTER = 10_000;
-        private static int LOOP_COUNTER = 100_000;
+        private static int MIDI_SIGNAL_COUNTER = 100_000;
+        private static int EXECUTE_COUNTER = 100_000;
 		private const int DEVICE_ID = 0, MemoryAllocSize = 0x10000; // memory alloc
 		public delegate void PrinterFunc(string msg);
 		public static PrinterFunc Print;
@@ -59,7 +59,7 @@
 		{
 			PC = 0;
 			ADR = 0;
-            CAPACITY_COUNTER = 100_000;
+            MIDI_SIGNAL_COUNTER = 100_000;
             Array.Clear(MEM);
 
             TERMINATED = false;
@@ -71,7 +71,7 @@
 			Thread2.Clear();
 			Thread3.Clear();
 			Thread4.Clear();
-            LOOP_COUNTER = 100_000;
+            EXECUTE_COUNTER = 100_000;
 			OUTDEVICE.Reset();
         }
 
@@ -156,8 +156,8 @@
 			ChannelMessage message = new ChannelMessage(ChannelCommand.NoteOn, CHANNEL, tone, volume);
             IMyMusicCommand command = new MyToneCommand(message, duration);
 			StoreCommand(command);
-            CAPACITY_COUNTER--;
-            if (CAPACITY_COUNTER == 0)
+            MIDI_SIGNAL_COUNTER--;
+            if (MIDI_SIGNAL_COUNTER == 0)
             {
                 throw new Exceptions.ThreadExceededException("Bola presiahnutá kapacita tónov vo vlákne");
             }
@@ -179,8 +179,8 @@
             }
             IMyMusicCommand command = new MyAccordCommand(messages, duration);
             StoreCommand(command);
-            CAPACITY_COUNTER--;
-            if (CAPACITY_COUNTER == 0)
+            MIDI_SIGNAL_COUNTER--;
+            if (MIDI_SIGNAL_COUNTER == 0)
             {
                 throw new Exceptions.ThreadExceededException("Bola presiahnutá kapacita tónov vo vlákne");
             }
@@ -209,8 +209,8 @@
         private static void Execute()
         {
             int index;
-            LOOP_COUNTER--;
-            if (LOOP_COUNTER == 0)
+            EXECUTE_COUNTER--;
+            if (EXECUTE_COUNTER <= 0)
             {
                 Print("Upozornenie: Program beží príliš dlho, presiahol počet inštrukcií!");
                 return;
@@ -419,7 +419,7 @@
                 case (int)Instruction.Thrd:
                     PC++;
                     CHANNEL++;
-                    CAPACITY_COUNTER = CAPACITY_LIMITER;
+                    MIDI_SIGNAL_COUNTER = CAPACITY_LIMITER;
                     break;
 
                 case (int)Instruction.Pause:
