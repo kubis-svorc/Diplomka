@@ -67,8 +67,8 @@
                     </Grid.ColumnDefinitions>
                     <TextBox x:Name="LineNumerator" VerticalScrollBarVisibility="Disabled" IsReadOnly="True" Padding="5" TextAlignment="Right" Grid.RowSpan="2" 
                              FontSize="10" AutomationProperties.Name="Číselník riadkov" />
-                    <TextBox AutomationProperties.Name="Kód" 
-                             AutomationProperties.AutomationId="Kód"
+                    <TextBox AutomationProperties.Name="Editor kódu" 
+                             AutomationProperties.AutomationId="Editor kódu"
                              Padding="5" 
                              x:Name="CodeTab" 
                              Grid.Column="1" 

@@ -15,7 +15,6 @@
     using System.Windows.Automation;
     using System.Text;
     using Diplomka.Analyzators.SyntaxNodes;
-    using System.CodeDom;
 
     public partial class MainWindow : Window
 	{
@@ -37,7 +36,7 @@
 
 		public void PrintInfo(string message)
 		{
-			Application.Current.Dispatcher.Invoke(() => ErrorTab.Items.Add(message));
+			Application.Current.Dispatcher.Invoke(() => ErrorTab.Items.Add(new ListViewItem() { Content = message }));
 		}
 
 		public override void EndInit()
@@ -48,25 +47,46 @@
 
 		protected override void OnClosing(CancelEventArgs e)
 		{
-			Application.Current.Shutdown(0);
-			Environment.Exit(0);
-		}
+            MessageBoxResult result = MessageBox.Show(
+                "Ste si istý, že chcete ukončiť aplikáciu?\r\n" +
+                "Neuložené zmeny môžu byť stratené.\r\n" +
+                "Stlačte Áno pre uloženie alebo Nie pre ukončenie bez uloženia.",
+                "Ukončiť aplikáciu",
+                MessageBoxButton.YesNoCancel);
+
+            if (MessageBoxResult.Yes == result)
+            {
+                OnSave(this, null);
+            }
+            else if (MessageBoxResult.Cancel == result)
+            {
+                e.Cancel = true;
+                return;
+            }             
+            Application.Current.Shutdown(0);
+            Environment.Exit(0);
+        }
 
 		private void OnExitClick(object sender, RoutedEventArgs e)
 		{
 			MessageBoxResult result = MessageBox.Show(
 				"Ste si istý, že chcete ukončiť aplikáciu?\r\n" +
 				"Neuložené zmeny môžu byť stratené.\r\n" +
-				"Stlačte Áno pre uloženie alebo Nie pre návrat do programu.",
+				"Stlačte Áno pre uloženie alebo Nie pre ukončenie bez uloženia.",
 				"Ukončiť aplikáciu",
-				MessageBoxButton.YesNo);
+				MessageBoxButton.YesNoCancel);
 
 			if (MessageBoxResult.Yes == result)
 			{
 				OnSave(sender, e);
 			}
-
-			Application.Current.MainWindow.Close();
+			else if (MessageBoxResult.Cancel == result) 
+			{
+                e.Handled = true;
+                return;
+			}
+            e.Handled = true;
+            Application.Current.MainWindow.Close();
 			Application.Current.Shutdown(0);
 			Environment.Exit(0);
 		}
@@ -77,14 +97,19 @@
 				"Neuložené zmeny môžu byť stratené.\r\n" +
 				"Stlačte Áno pre uloženie alebo Nie pre pokračovanie bez uloženia.",
 				"Nový program",
-				MessageBoxButton.YesNo);
+				MessageBoxButton.YesNoCancel);
 
 			if (MessageBoxResult.Yes == result)
 			{
 				OnSave(sender, e);
 			}
-
-			CodeTab.Text = "vlákno hlavné\r\n\r\nkoniec";
+			else if (MessageBoxResult.Cancel == result) 
+			{
+                e.Handled = true;
+                return;
+			}
+            e.Handled = true;
+            CodeTab.Text = "vlákno hlavné\r\n\r\nkoniec";
 			ErrorTab.Items.Clear();
 			SuggestionList.ItemsSource = null; //Enumerable.Empty<ItemsControl>();
 			CurrentFilePath = string.Empty;
@@ -120,7 +145,6 @@
 		{
 			var dialog = new SaveFileDialog
 			{
-				InitialDirectory = "C:\\",
 				Title = "Uložiť program ako"
 			};
 			if (dialog.ShowDialog().Value)
@@ -230,10 +254,6 @@
 			}
 
 			string wordUnderCaret = builder.ToString();
-			if (wordUnderCaret.Length < 2)
-			{
-				wordUnderCaret = string.Empty;
-			}
 			string[] suggestions = Wrappers
 				.KeywordContainer
 				.Keywords
@@ -401,7 +421,7 @@
 
 		private void CodeTab_LostFocus(object sender, RoutedEventArgs e)
 		{
-			AutomationProperties.SetName(CodeTab, "Kód");
+			AutomationProperties.SetName(CodeTab, "Editor kódu");
 		}
 
 		private void OnPlayClick(object sender, RoutedEventArgs e)
@@ -448,6 +468,7 @@
 		{
 			if (Key.Enter == e.Key || Key.Space == e.Key)
 			{
+				//e.Handled = true;
 				if (SuggestionList.SelectedItem != null)
 				{
 
@@ -541,7 +562,6 @@
 			bool isCtrlPressed = (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl));
 			switch (e.Key)
 			{
-
 				case Key.F1:
 					e.Handled = true;
 					OnHelpClick(this, null);

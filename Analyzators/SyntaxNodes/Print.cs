@@ -19,8 +19,17 @@
         public override void Generate()
         {
             //_expression.Generate();
-            VirtualMachine.Poke((int)Instruction.Print);
-            VirtualMachine.Poke(VirtualMachine.Variables[_name]);
+            if (_expression is Variable)
+            {
+                VirtualMachine.Poke((int)Instruction.Push);
+                VirtualMachine.Poke(VirtualMachine.Variables[_name]);
+                VirtualMachine.Poke((int)Instruction.Print);
+            }
+            else             
+            {
+                _expression.Generate();
+                VirtualMachine.Poke((int)Instruction.Print);
+            }            
         }
 
     }

@@ -53,7 +53,7 @@
 			token.Clear();
 			position = index - 1;
 
-			if (char.IsNumber(look) || '-' == look)
+			if (char.IsNumber(look))
 			{
 				do
 				{
@@ -103,6 +103,22 @@
 			}
 		}
 
+		public void ScanLineUntilParams() 
+		{
+			while ('\r' != look && '\n' != look && END != look) 
+			{
+				if (':' == look)
+				{
+					index = (index - 3 < 0) ? 0 : index - 3;					
+					look = input[index];
+					token.Remove(token.Length - 1, 1);
+					break;
+				}
+				token.Append(look);
+				Next();				
+			}
+        }
+		
 		public void Init()
 		{
 			index = 0;

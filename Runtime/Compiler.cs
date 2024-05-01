@@ -2,6 +2,10 @@
 using Diplomka.Analyzators;
 using System;
 using Diplomka.Analyzators.SyntaxNodes;
+using System.Security.Principal;
+using System.Threading;
+using System.Xml.Linq;
+using System.Windows;
 
 namespace Diplomka.Runtime
 {
@@ -79,45 +83,26 @@ namespace Diplomka.Runtime
 					string ton;
 					Const[] tones = new Const[4] { null, null, null, null };
 					int i = 0, toneCode;
-					while (analyzer.look != '\n' && analyzer.look != '\0' && i < 4 && analyzer.token[analyzer.token.Length - 1] != ':')
-					{
-                        ton = analyzer.ToString();
-                        Scan();
-                        if (Kind.NUMBER == analyzer.kind)   // c2, c3, c1, ...
+                    analyzer.ScanLineUntilParams();
+                    var line = analyzer.ToString().Trim().Split(" ");                    
+                    foreach (var item in line)
+                    {
+                        if (i >= 4) 
                         {
-                            ton += analyzer.ToString();
-                            Scan();
+                            throw new Exceptions.SyntaxException($"Chyba v riadku {analyzer.row} : Akord zahrá maximálne 4 tóny, zadal si {line.Length}");
                         }
-                        toneCode = GetToneCode(ton, analyzer.row);
-						tones[i] = new Const(toneCode);
+                        ton = item;
+                        toneCode = GetToneCode(ton, analyzer.row - 1);
+                        tones[i] = new Const(toneCode);
                         ++i;
-					}
+                    }
+                    Scan();
                     string parameters = analyzer.ToString();
-
                     int duration = VirtualMachine.DEFAULT_DURATION,
                         volume = VirtualMachine.DEFAULT_VOLUME,
                         direction = 0;
 
-                    while (parameters.IndexOf(":") > -1)
-                    {
-                        if ("h:" == parameters)
-                        {
-                            Scan();  //preskoc h:
-                            analyzer.Check(Kind.NUMBER);
-                            volume = Convert.ToInt32(analyzer.ToString());
-							volume = CalcuateVolume(volume);
-                            Scan(); // preskoc cislo
-                        }
-                        else if ("d:" == parameters)
-                        {
-                            Scan();  //preskoc d:
-                            analyzer.Check(Kind.NUMBER);
-                            duration = System.Convert.ToInt32(analyzer.ToString());
-                            Scan(); // preskoc cislo
-                        }
-                        parameters = analyzer.ToString();
-                    }
-                    
+                    SetToneParameters(ref volume, ref duration, ref direction);
 					result.Add(new Accord(tones, new Const(duration), new Const(volume)));
                 }
 

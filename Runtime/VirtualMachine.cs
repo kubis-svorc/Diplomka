@@ -72,7 +72,8 @@
 			Thread3.Clear();
 			Thread4.Clear();
             EXECUTE_COUNTER = 100_000;
-			OUTDEVICE.Reset();
+            SetInstrument((int)GeneralMidiInstrument.AcousticGrandPiano);
+            OUTDEVICE.Reset();
         }
 
 		public static void Poke(int code)
@@ -315,11 +316,19 @@
 
                 case (int)Instruction.Print:
                     PC++;
-                    index = MEM[PC];
-                    PC++;
-                    var pair = Variables.First((p) => p.Value == index);
-                    string tmp = $"Hodnota {pair.Key} : {MEM[pair.Value]}";
-                    Print(tmp);
+                    index = MEM[TOP];
+                    var pair = Variables.FirstOrDefault((p) => p.Value == index);
+                    string printMessage;
+                    if (!string.IsNullOrWhiteSpace(pair.Key))
+                    {
+                        printMessage = $"hodnota {pair.Key} je {MEM[pair.Value]}";
+                    }
+                    else 
+                    {
+                        printMessage = $"Hodnota výrazu je {index}";
+                    }
+                    Print(printMessage);
+                    TOP++;
                     break;
 
                 case (int)Instruction.Jmp:
