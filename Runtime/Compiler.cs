@@ -6,6 +6,7 @@ using System.Security.Principal;
 using System.Threading;
 using System.Xml.Linq;
 using System.Windows;
+using System.Collections.Generic;
 
 namespace Diplomka.Runtime
 {
@@ -15,6 +16,8 @@ namespace Diplomka.Runtime
         private delegate void Scanner();    // to use shortcut Scan() for analyzer.Scan()
         private delegate void Poker(int i); // to use shortcut Poke(code) for VirtualMachine.Poke(code)
 		private Scanner Scan;				// procedure reference
+        private int _activeThread = 0;
+        private Dictionary<string, int> Threads = new Dictionary<string, int>();
 		
 		public Compiler()
         {
@@ -41,8 +44,8 @@ namespace Diplomka.Runtime
 				if ("nastroj" == keyword || "nástroj" == keyword)
 				{
 					Scan();
-					int instrumentCode = GetInstrumentCode(analyzer.ToString(), analyzer.row);
-					result.Add(new Instrument(new Const(instrumentCode)));
+					int instrumentCode = GetInstrumentCode(analyzer.ToString(), analyzer.row);                    
+                    result.Add(new Instrument(new Const(instrumentCode)));
 					Scan();
 				}
 
@@ -59,7 +62,7 @@ namespace Diplomka.Runtime
                         duration = rnd.Next(250, 2500);
                         SetToneParameters(ref volume, ref duration, ref direction);
                         Syntax randomTone = new RandomTone(volume, duration);
-                        result.Add(randomTone);
+                        result.Add(randomTone);                        
                     }
                     else 
                     {
@@ -103,7 +106,8 @@ namespace Diplomka.Runtime
                         direction = 0;
 
                     SetToneParameters(ref volume, ref duration, ref direction);
-					result.Add(new Accord(tones, new Const(duration), new Const(volume)));
+                    result.Add(new Accord(tones, new Const(duration), new Const(volume)));
+                    
                 }
 
 				else if ("opakuj" == keyword)
@@ -178,15 +182,28 @@ namespace Diplomka.Runtime
                 }			
 
 				else if ("vlakno" == keyword || "vlákno" == keyword)
-				{
-					// todo: vlakno == midi kanal
+				{            
+                    if (Threads.Count > 4)
+                    {
+                        new Exceptions.ThreadExceededException("Chyba aplikácie: Maximálny počet vlákien je 4");
+                    }
 					Scan();
 					string name = analyzer.ToString();
+                    _activeThread = Threads.Count;
+                    if (Threads.ContainsKey(name))
+                    {
+                        _activeThread = Threads[name];
+                    }
+                    else 
+                    {
+                        Threads.Add(name, ++_activeThread);
+                    }
 					Scan();
-					ThreadCommand thread = new ThreadCommand(Parse());
+					ThreadCommand thread = new ThreadCommand(Parse(), _activeThread);
 					result.Add(thread);
 					analyzer.Check(Kind.WORD, "koniec");
 					Scan();
+                    _activeThread = 0;
                 }
 				
 				else if ("losuj" == keyword)
@@ -199,8 +216,9 @@ namespace Diplomka.Runtime
 				else if ("pauza" == keyword)
                 {
 					Scan();
-					Syntax expression = Compare();
-					result.Add(new Pause(expression));
+                    Syntax expression = Compare();
+                    result.Add(new Pause(expression));
+                    
                 }
 				
 				else
@@ -211,7 +229,7 @@ namespace Diplomka.Runtime
                     {
 						if (!VirtualMachine.Subroutines.ContainsKey(name))
 						{
-							throw new System.Collections.Generic.KeyNotFoundException($"Chyba v riadku {analyzer.row} : Nepoznám {name}");
+							throw new KeyNotFoundException($"Chyba v riadku {analyzer.row} : Nepoznám {name}");
 						}
 						result.Add(new Call(name));
 					}
@@ -363,12 +381,12 @@ namespace Diplomka.Runtime
 			analyzer.Check(Kind.SYMBOL, "(");
 			Scan();
 			analyzer.Check(Kind.NUMBER);
-			int minVal = System.Convert.ToInt32(analyzer.ToString());
+			int minVal = Convert.ToInt32(analyzer.ToString());
 			Scan();
 			analyzer.Check(Kind.SYMBOL, ",");
 			Scan();
 			analyzer.Check(Kind.NUMBER);
-			int maxVal = System.Convert.ToInt32(analyzer.ToString()) + 1; // zahrnieme hornu hranicu
+			int maxVal = Convert.ToInt32(analyzer.ToString()) + 1; // zahrnieme hornu hranicu
 			Scan();
 			analyzer.Check(Kind.SYMBOL, ")");
 			Scan();

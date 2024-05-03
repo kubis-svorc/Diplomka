@@ -15,6 +15,7 @@
     using System.Windows.Automation;
     using System.Text;
     using Diplomka.Analyzators.SyntaxNodes;
+    using System.Globalization;
 
     public partial class MainWindow : Window
 	{
@@ -22,7 +23,8 @@
 		private bool _isTextBoxFocused;
 		private CancellationTokenSource _cancelTokenSource;
 		private bool DarkTheme;
-		private static string CurrentFilePath = null;
+		private static string CurrentFolderPath = null;
+		private bool _isFileChanged = false;
 
 		public MainWindow()
 		{
@@ -47,44 +49,50 @@
 
 		protected override void OnClosing(CancelEventArgs e)
 		{
-            MessageBoxResult result = MessageBox.Show(
-                "Ste si istý, že chcete ukončiť aplikáciu?\r\n" +
-                "Neuložené zmeny môžu byť stratené.\r\n" +
-                "Stlačte Áno pre uloženie alebo Nie pre ukončenie bez uloženia.",
-                "Ukončiť aplikáciu",
-                MessageBoxButton.YesNoCancel);
+			if (_isFileChanged)
+			{
+				MessageBoxResult result = MessageBox.Show(
+					"Ste si istý, že chcete ukončiť aplikáciu?\r\n" +
+					"Neuložené zmeny môžu byť stratené.\r\n" +
+					"Stlačte Áno pre uloženie alebo Nie pre ukončenie bez uloženia.",
+					"Ukončiť aplikáciu",
+					MessageBoxButton.YesNoCancel);
 
-            if (MessageBoxResult.Yes == result)
-            {
-                OnSave(this, null);
-            }
-            else if (MessageBoxResult.Cancel == result)
-            {
-                e.Cancel = true;
-                return;
-            }             
+				if (MessageBoxResult.Yes == result)
+				{
+					OnSave(this, null);
+				}
+				else if (MessageBoxResult.Cancel == result)
+				{
+					e.Cancel = true;
+					return;
+				}
+			}
             Application.Current.Shutdown(0);
             Environment.Exit(0);
         }
 
 		private void OnExitClick(object sender, RoutedEventArgs e)
 		{
-			MessageBoxResult result = MessageBox.Show(
-				"Ste si istý, že chcete ukončiť aplikáciu?\r\n" +
-				"Neuložené zmeny môžu byť stratené.\r\n" +
-				"Stlačte Áno pre uloženie alebo Nie pre ukončenie bez uloženia.",
-				"Ukončiť aplikáciu",
-				MessageBoxButton.YesNoCancel);
+			if (_isFileChanged) 
+			{
+				MessageBoxResult result = MessageBox.Show(
+					"Ste si istý, že chcete ukončiť aplikáciu?\r\n" +
+					"Neuložené zmeny môžu byť stratené.\r\n" +
+					"Stlačte Áno pre uloženie alebo Nie pre ukončenie bez uloženia.",
+					"Ukončiť aplikáciu",
+					MessageBoxButton.YesNoCancel);
 
-			if (MessageBoxResult.Yes == result)
-			{
-				OnSave(sender, e);
-			}
-			else if (MessageBoxResult.Cancel == result) 
-			{
-                e.Handled = true;
-                return;
-			}
+				if (MessageBoxResult.Yes == result)
+				{
+					OnSave(sender, e);
+				}
+				else if (MessageBoxResult.Cancel == result) 
+				{
+					e.Handled = true;
+					return;
+				}
+            }
             e.Handled = true;
             Application.Current.MainWindow.Close();
 			Application.Current.Shutdown(0);
@@ -112,22 +120,22 @@
             CodeTab.Text = "vlákno hlavné\r\n\r\nkoniec";
 			ErrorTab.Items.Clear();
 			SuggestionList.ItemsSource = null; //Enumerable.Empty<ItemsControl>();
-			CurrentFilePath = string.Empty;
+			CurrentFolderPath = string.Empty;
 		}
 
 		private void OnOpenFile(object sender, RoutedEventArgs e)
 		{
 			var dialog = new OpenFileDialog
 			{
-				InitialDirectory = "C:\\",
-				Filter = "Text Files|*.txt|All Files|*.*",
+				InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+				Filter = "Text Files|*.txt",
 				Title = "Otvoriť program"
 			};
 
 			if (dialog.ShowDialog().Value)
 			{
 				string textPath = dialog.FileName;
-				CurrentFilePath = Path.Combine(
+				CurrentFolderPath = Path.Combine(
 					Path.GetDirectoryName(textPath),
 					Path.GetFileNameWithoutExtension(textPath));
 				try
@@ -145,15 +153,26 @@
 		{
 			var dialog = new SaveFileDialog
 			{
-				Title = "Uložiť program ako"
-			};
+				Title = "Uložiť program ako",
+				InitialDirectory = !string.IsNullOrEmpty(CurrentFolderPath) ? CurrentFolderPath : Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+				AddExtension = false,
+				Filter="Text Files|*.txt",
+				DefaultExt="Text Files|*.txt"
+				
+            };
+
 			if (dialog.ShowDialog().Value)
 			{
-				string textPath = string.Concat(dialog.FileName, ".txt");
-				string midiPath = string.Concat(dialog.FileName, ".midi");
-				CurrentFilePath = Path.GetDirectoryName(dialog.FileName);
+                CurrentFolderPath = Path.GetDirectoryName(dialog.FileName);
+                string textPath = dialog.FileName; 
+				string midiPath = string.Concat(Path.Join(CurrentFolderPath, "MIDI", Path.GetFileNameWithoutExtension(dialog.FileName)), ".MIDI");
+
 				try
 				{
+					if (!Directory.Exists(Path.Join(CurrentFolderPath, "MIDI"))) 
+					{
+						Directory.CreateDirectory(Path.Join(CurrentFolderPath, "MIDI"));
+					}
 					VirtualMachine.SaveMIDI(midiPath);
 					File.WriteAllText(textPath, CodeTab.Text, Encoding.UTF8);
 				}
@@ -168,19 +187,19 @@
 
 		private void OnSave(object sender, RoutedEventArgs e)
 		{
-			if (string.IsNullOrWhiteSpace(CurrentFilePath))
+			if (string.IsNullOrWhiteSpace(CurrentFolderPath))
 			{
 				OnSaveAs(sender, e);
 				return;
 			}
 
-			string textPath = string.Concat(CurrentFilePath, ".txt");
-			string midiPath = string.Concat(CurrentFilePath, ".midi");
+			string textPath = string.Concat(CurrentFolderPath, ".txt");
+			string midiPath = string.Concat(CurrentFolderPath, ".midi");
 
 			try
 			{
 				VirtualMachine.SaveMIDI(midiPath);
-				File.WriteAllText(textPath, CodeTab.Text, System.Text.Encoding.UTF8);
+				File.WriteAllText(textPath, CodeTab.Text, Encoding.UTF8);
 			}
 			catch (Exception ex)
 			{
@@ -254,10 +273,11 @@
 			}
 
 			string wordUnderCaret = builder.ToString();
-			string[] suggestions = Wrappers
+			CompareInfo ci = CultureInfo.InvariantCulture.CompareInfo;
+            string[] suggestions = Wrappers
 				.KeywordContainer
 				.Keywords
-				.Where(kw => Regex.IsMatch(kw, wordUnderCaret))
+				.Where(kw => ci.IsPrefix(kw, wordUnderCaret, CompareOptions.IgnoreNonSpace))
 				.ToArray();
 			SuggestionList.ItemsSource = suggestions;
 		}
@@ -268,6 +288,7 @@
 			{
 				return;
 			}
+			_isFileChanged = true;
 			FillSpacesForNVDA();
 			UpdateSuggestionList();
 		}

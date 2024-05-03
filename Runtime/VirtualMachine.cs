@@ -426,9 +426,13 @@
                     break;
 
                 case (int)Instruction.Thrd:
+                    PC++;                    
+                    CHANNEL = MEM[PC];
                     PC++;
-                    CHANNEL++;
-                    MIDI_SIGNAL_COUNTER = CAPACITY_LIMITER;
+                    if (CHANNEL != 0) 
+                    {
+                        MIDI_SIGNAL_COUNTER = CAPACITY_LIMITER;
+                    }                    
                     break;
 
                 case (int)Instruction.Pause:
@@ -458,8 +462,9 @@
                     Thread2.Add(command);
                     break;
                 case 1: //Default to channel 1?
-                default:
                     Thread1.Add(command);
+                    break;
+                default:
                     break;
             }
         }
