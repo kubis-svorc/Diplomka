@@ -86,6 +86,11 @@
 				if (MessageBoxResult.Yes == result)
 				{
 					OnSave(sender, e);
+					_isFileChanged = false;
+				}
+				else if (MessageBoxResult.No == result)
+				{
+					_isFileChanged = false;
 				}
 				else if (MessageBoxResult.Cancel == result) 
 				{
@@ -94,9 +99,7 @@
 				}
             }
             e.Handled = true;
-            Application.Current.MainWindow.Close();
-			Application.Current.Shutdown(0);
-			Environment.Exit(0);
+            Application.Current.MainWindow.Close();			
 		}
 
 		private void OnNovyClick(object sender, RoutedEventArgs e)
@@ -141,6 +144,7 @@
 				try
 				{
 					CodeTab.Text = File.ReadAllText(textPath);
+					_isFileChanged = false;
 				}
 				catch (IOException ex)
 				{
@@ -287,8 +291,7 @@
 			if (!_isTextBoxFocused)
 			{
 				return;
-			}
-			_isFileChanged = true;
+			}			
 			FillSpacesForNVDA();
 			UpdateSuggestionList();
 		}
@@ -401,7 +404,8 @@
 		private void CodeTab_TextChanged(object sender, TextChangedEventArgs e)
 		{
 			UpdateLineNumerator();
-		}
+            _isFileChanged = true;
+        }
 
 		private void UpdateLineNumerator()
 		{
@@ -459,7 +463,7 @@
 			{
 				if (match.Index > caret && match.Value != "koniec")
 				{
-					string name = $"Riadok: {CodeTab.GetLineIndexFromCharacterIndex(match.Index) + 1}, slovo: {match.Value}, úroveň:  {currentDept}";
+					string name = $"Riadok: {CodeTab.GetLineIndexFromCharacterIndex(match.Index) + 1}, príkaz: {match.Value}, úroveň:  {currentDept}";
 					CodeTab.CaretIndex = match.Index;
 					PrintInfo(name);
 					ErrorTab.Focus();
